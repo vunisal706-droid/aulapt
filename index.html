@@ -306,6 +306,17 @@ table.colop s{text-decoration-color:#dc2626;text-decoration-thickness:3px;color:
 .grupos span{border:2px solid #bfdbfe;border-radius:10px;padding:2px 6px;background:#eff6ff}
 table.colop tr.rs td:first-child{border:none;background:none}
 
+/* Sopas */
+.sopa-wrap{position:relative;width:max-content;max-width:100%;margin:0 auto;background:#fff;border-radius:16px;box-shadow:var(--shadow-card);padding:10px}
+.sopa-grid{display:grid;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;font-family:'Andika',var(--font-body);font-weight:700;color:#0f172a}
+.sopa-grid div{display:grid;place-items:center;border-radius:6px}
+.sopa-grid div:hover{background:#f1f5f9}
+.sopa-svg{position:absolute;left:10px;top:10px;pointer-events:none}
+.sopa-lista{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.sp-w{font-family:'Andika',var(--font-body);font-size:1.3rem;font-weight:700;padding:4px 12px;border-radius:999px;background:#fff;border:2px solid var(--color-border);display:inline-flex;align-items:center;gap:6px}
+.sp-w.ok{text-decoration:line-through;border-color:transparent;color:#334155}
+.sp-e{font-size:1.4rem;text-decoration:none}
+
 </style>
 </head>
 <body>
@@ -324,6 +335,7 @@ table.colop tr.rs td:first-child{border:none;background:none}
 <section class="view" id="v-fono"></section>
 <section class="view" id="v-num"></section>
 <section class="view" id="v-ffee"></section>
+<section class="view" id="v-sopas"></section>
 <section class="view" id="v-alumnos"></section>
 
 </main>
@@ -625,7 +637,7 @@ const regsDe=(id,m)=>DB.reg.filter(r=>r.a===id&&(!m||r.m===m));
 function pintarChip(){const a=alumnoActivo();$('#chipNombre').textContent=a?a.nombre:'Sin alumno';$('#chipAlumno').classList.toggle('on',!!a);}
 function avisoSinAlumno(){if(!alumnoActivo()&&!sessionStorage.getItem('aulapt_aviso')){sessionStorage.setItem('aulapt_aviso','1');toast('Elige un alumno arriba para guardar su progreso','info');}}
 /* ===== Navegación ===== */
-const TITULOS={home:'CEIP Capitulaciones · Santa Fe',grafia:'Taller de Grafía',cartilla:'Cartilla de lectura',lectura:'Lectura Fluida',fono:'Fonología y Ortografía',num:'Sentido Numérico',ffee:'Funciones Ejecutivas',alumnos:'Alumnado y progreso'};
+const TITULOS={home:'CEIP Capitulaciones · Santa Fe',grafia:'Taller de Grafía',cartilla:'Cartilla de lectura',sopas:'Sopas de letras',lectura:'Lectura Fluida',fono:'Fonología y Ortografía',num:'Sentido Numérico',ffee:'Funciones Ejecutivas',alumnos:'Alumnado y progreso'};
 const INITS={};
 function ir(v,push=true){
   try{pararTodo();pararTimer();speechSynthesis.cancel();}catch(e){}
@@ -654,6 +666,7 @@ INITS.home=()=>{
   <div class="grid-mod">
     <button class="mod feat" data-go="grafia"><span class="chip tag">Principal</span><span class="ic" style="background:var(--c-grafia)">✎</span><h3>Taller de Grafía</h3><p>Letra ligada paso a paso: punto de inicio, dirección del trazo y corrección automática. Letras, sílabas, palabras y frases con todas las letras. Fichas para imprimir con pauta.</p></button>
     <button class="mod" data-go="cartilla"><span class="ic" style="background:#0891b2">ma</span><h3>Cartilla de lectura</h3><p>Una lección por letra en el orden del cole, con sílabas, palabras y frases solo con letras ya vistas.</p></button>
+    <button class="mod" data-go="sopas"><span class="ic" style="background:#f59e0b">🔎</span><h3>Sopas de letras</h3><p>Infinitas: por temas, por letras o lecciones de la cartilla. Se juegan en pantalla o se imprimen por lotes con solucionario.</p></button>
     <button class="mod" data-go="lectura"><span class="ic" style="background:var(--c-lectura)">Aa</span><h3>Lectura Fluida</h3><p>Textos graduados, letra adaptada, sílabas de colores, regla de lectura, lectura guiada, minuto lector y palabras por minuto.</p></button>
     <button class="mod" data-go="fono"><span class="ic" style="background:var(--c-fono)">b·d</span><h3>Fonología, lectura y ortografía</h3><p>Conciencia fonológica, b/d/p/q, palabra y dibujo, completar, ordenar, separar palabras, reglas ortográficas y dictados.</p></button>
     <button class="mod" data-go="num"><span class="ic" style="background:var(--c-num)">12</span><h3>Matemáticas</h3><p>Numeración con U, D, C y UM, recta numérica, tabla del 100, cálculo mental OAOA, ABN, problemas y series.</p></button>
@@ -2057,6 +2070,184 @@ function imprimirLeccion(c,grandes,letraSVG){
   <h2>Sílabas</h2><div class="sil">${c.sil.map(s=>`<span>${esc(s)}</span>`).join('')}</div>
   <h2>Palabras</h2><div class="pal">${c.pals.slice(0,30).map(p=>`<div>${esc(p)}</div>`).join('')}</div>
   <h2>Frases</h2><div class="fr">${c.frases.slice(0,8).map(f=>`<p>${esc(f)}</p>`).join('')}</div></body></html>`);
+  w.document.close();
+}
+
+/* ===================== SOPAS DE LETRAS ===================== */
+const TEMAS_SOPA={
+ 'Animales':'perro🐕 gato🐈 vaca🐄 caballo🐴 oveja🐑 cerdo🐷 pato🦆 gallina🐔 conejo🐰 ratón🐭 león🦁 tigre🐯 elefante🐘 jirafa🦒 mono🐒 oso🐻 lobo🐺 zorro🦊 rana🐸 pez🐟 ballena🐋 delfín🐬 tortuga🐢 serpiente🐍 búho🦉 loro🦜 abeja🐝 hormiga🐜 mariposa🦋 caracol🐌 cebra🦓 camello🐫 pingüino🐧 foca🦭 pulpo🐙',
+ 'Frutas':'manzana🍎 pera🍐 plátano🍌 naranja🍊 limón🍋 fresa🍓 uva🍇 sandía🍉 melón🍈 piña🍍 cereza🍒 kiwi🥝 mango🥭 melocotón🍑 coco🥥 ciruela granada higo mandarina',
+ 'Comida':'pan🍞 queso🧀 leche🥛 huevo🥚 arroz🍚 sopa🍲 pizza🍕 pasta🍝 tomate🍅 patata🥔 zanahoria🥕 lechuga🥬 pollo🍗 pescado🐟 galleta🍪 helado🍦 tarta🎂 yogur agua💧 zumo🧃 bocadillo🥪 chocolate🍫 miel🍯 aceite',
+ 'Colores':'rojo azul verde amarillo naranja morado rosa negro blanco gris marrón violeta celeste dorado',
+ 'La casa':'mesa silla cama sofá puerta ventana cocina baño salón lámpara espejo armario alfombra cortina llave techo pared suelo nevera horno ducha',
+ 'El cole':'lápiz✏️ goma libro📕 cuaderno regla📏 tijeras✂️ mochila🎒 pizarra tiza clase recreo patio maestra maestro estuche papel dibujo colores',
+ 'El cuerpo':'cabeza pelo cara ojo👁️ nariz👃 boca👄 oreja👂 diente🦷 lengua cuello hombro brazo💪 codo mano✋ dedo uña pecho barriga pierna🦵 rodilla pie🦶 espalda',
+ 'La ropa':'camisa camiseta👕 pantalón👖 falda vestido👗 chaqueta abrigo🧥 jersey bufanda🧣 gorro guantes🧤 calcetines🧦 zapatos👟 botas🥾 sandalias pijama gafas👓',
+ 'Transportes':'coche🚗 autobús🚌 tren🚂 avión✈️ barco⛵ bici🚲 moto🏍️ camión🚚 taxi🚕 metro tractor🚜 cohete🚀 helicóptero🚁 submarino patinete🛴 ambulancia🚑 furgoneta globo🎈',
+ 'Profesiones':'maestro médico enfermera bombero policía cocinero panadero pintor cartero piloto granjero carpintero dentista peluquero albañil pescador veterinario músico',
+ 'Deportes':'fútbol⚽ baloncesto🏀 tenis🎾 natación ciclismo atletismo golf⛳ voleibol balonmano judo kárate patinaje esquí gimnasia rugby ajedrez♟️ pádel',
+ 'Naturaleza':'árbol🌳 flor🌸 hoja🍃 río mar montaña⛰️ playa🏖️ sol☀️ luna🌙 estrella⭐ nube☁️ lluvia nieve❄️ viento piedra arena lago bosque campo cielo volcán🌋 isla',
+ 'Juguetes':'pelota⚽ muñeca peonza cometa puzle🧩 dado🎲 cuerda columpio tobogán balón comba canicas yoyó robot🤖 tren globo🎈 patines',
+ 'La familia':'madre padre mamá papá hermano hermana abuelo abuela tío tía primo prima bebé👶 hijo hija nieto nieta familia',
+ 'Emociones':'alegría tristeza miedo enfado calma amor sorpresa vergüenza feliz triste contento nervioso tranquilo',
+ 'Días y meses':'lunes martes miércoles jueves viernes sábado domingo enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre',
+ 'Números':'uno dos tres cuatro cinco seis siete ocho nueve diez once doce trece veinte treinta cien mil',
+ 'Otoño':'otoño hoja🍂 castaña🌰 seta🍄 lluvia paraguas☂️ viento bellota nuez calabaza🎃 bruja🧙 fantasma👻 murciélago🦇 araña🕷️ escoba',
+ 'Navidad':'navidad árbol🎄 estrella⭐ regalo🎁 turrón belén reyes pastor camello🐫 nieve❄️ campana🔔 vela🕯️ bola mazapán',
+ 'Andalucía':'granada alhambra sierra vega olivo aceite flamenco guitarra feria gazpacho sevilla málaga córdoba jaén almería cádiz huelva',
+ 'Verbos':'correr saltar comer beber dormir leer escribir cantar bailar jugar nadar pintar mirar hablar reír llorar subir bajar abrir cerrar',
+ 'El mar':'mar ola playa arena barco pez delfín ballena pulpo cangrejo🦀 concha estrella medusa tiburón🦈 ancla⚓ faro isla',
+ 'El espacio':'sol luna estrella planeta cohete🚀 tierra marte cometa nave astronauta cielo galaxia satélite'
+};
+const SP={tema:'Animales',tam:10,dir:'facil',n:8,mayus:true,dibujos:false,letra:'b',propias:'',sopa:null,encontradas:[],t0:0};
+try{Object.assign(SP,JSON.parse(localStorage.getItem('aulapt_sopa')||'{}'));SP.sopa=null;}catch(e){}
+const guardarSP=()=>{const c=Object.assign({},SP);delete c.sopa;delete c.encontradas;localStorage.setItem('aulapt_sopa',JSON.stringify(c));};
+const RELLENO='EEEEEEAAAAAAOOOOOSSSSRRRRNNNNIIIIDDDLLLLCCCTTTUUUMMMPPBBGGVYQHFZJÑX';
+const limpiaSopa=w=>w.toUpperCase().replace(/[ÁÀ]/g,'A').replace(/[ÉÈ]/g,'E').replace(/[ÍÏ]/g,'I').replace(/[ÓÖ]/g,'O').replace(/[ÚÜ]/g,'U').replace(/[^A-ZÑ]/g,'');
+function palabrasTema(){
+  if(SP.tema==='__letra') return palabrasDe(SP.letra).map(w=>({w,e:''}));
+  if(SP.tema==='__propias') return SP.propias.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean).map(w=>({w,e:''}));
+  if(SP.tema.startsWith('__lec')){const i=+SP.tema.slice(5);return contenidoLeccion(i).pals.map(w=>({w,e:''}));}
+  return TEMAS_SOPA[SP.tema].split(' ').map(t=>{const m=t.match(/^([^\p{Extended_Pictographic}]+)(.*)$/u);return {w:m?m[1]:t,e:m?m[2]:''};});
+}
+const DIRS={facil:[[0,1],[1,0]],medio:[[0,1],[1,0],[1,1]],dificil:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]]};
+function crearSopa(lista,N,dir,n){
+  for(let intento=0;intento<30;intento++){
+    const g=Array.from({length:N},()=>Array(N).fill(null)); const colocadas=[];
+    const cands=shuffle(lista.filter(x=>{const L=limpiaSopa(x.w).length;return L>=2&&L<=N;})).slice(0,n*2);
+    cands.sort((a,b)=>limpiaSopa(b.w).length-limpiaSopa(a.w).length);
+    for(const c of cands){ if(colocadas.length>=n)break; const W=limpiaSopa(c.w); if(colocadas.some(p=>p.W===W))continue;
+      let ok=false;
+      for(let k=0;k<250&&!ok;k++){const [dr,dc]=pick(DIRS[dir]);const r=rnd(N),cc=rnd(N);const r2=r+dr*(W.length-1),c2=cc+dc*(W.length-1);
+        if(r2<0||r2>=N||c2<0||c2>=N)continue; let cabe=true;
+        for(let i=0;i<W.length;i++){const v=g[r+dr*i][cc+dc*i];if(v&&v!==W[i]){cabe=false;break;}}
+        if(!cabe)continue; for(let i=0;i<W.length;i++)g[r+dr*i][cc+dc*i]=W[i]; colocadas.push({W,w:c.w,e:c.e,r,c:cc,r2,c2}); ok=true;}
+    }
+    if(colocadas.length>=Math.min(n,cands.length)||intento===29){
+      for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!g[r][c])g[r][c]=pick(RELLENO);
+      colocadas.sort((a,b)=>a.W.localeCompare(b.W,'es'));
+      return {g,N,pal:colocadas};
+    }
+  }
+}
+INITS.sopas=()=>{
+  const v=$('#v-sopas');
+  if(!v.dataset.ini){v.dataset.ini=1;
+  v.innerHTML=`<div class="lec-layout"><aside class="panel card">
+    <div><h4>Tema</h4><select id="spTema"><optgroup label="Temas">${Object.keys(TEMAS_SOPA).map(t=>`<option>${t}</option>`).join('')}</optgroup>
+      <optgroup label="Lectoescritura"><option value="__letra">Palabras con una letra…</option>${LECCIONES.map((l,i)=>`<option value="__lec${i}">Cartilla: ${esc(l.t)}</option>`).join('')}</optgroup><optgroup label="Otras"><option value="__propias">Mis palabras</option></optgroup></select></div>
+    <div id="spLetraBox"><label class="f">Letra<select id="spLetra">${LETRAS_GRID.filter(l=>PALABRAS[l]).concat(TRABADAS).map(l=>`<option>${l}</option>`).join('')}</select></label></div>
+    <div id="spPropBox"><label class="f">Tus palabras (separadas por comas o una por línea)<textarea id="spProp"></textarea></label></div>
+    <div class="row"><label class="f" style="flex:1">Tamaño<select id="spTam">${[6,8,10,12,15].map(n=>`<option value="${n}">${n} × ${n}</option>`).join('')}</select></label>
+      <label class="f" style="flex:1">Palabras<select id="spN">${[4,5,6,8,10,12,15].map(n=>`<option>${n}</option>`).join('')}</select></label></div>
+    <label class="f">Direcciones<select id="spDir"><option value="facil">Fácil: → y ↓</option><option value="medio">Medio: → ↓ ↘</option><option value="dificil">Difícil: todas, también al revés</option></select></label>
+    <div class="checks"><label><input type="checkbox" id="spMay"> Mayúsculas</label><label><input type="checkbox" id="spDib"> Lista con dibujos</label></div>
+    <button class="btn big" id="spNueva">🔄 Nueva sopa</button>
+    <button class="btn warn" id="spLote">🖨 Imprimir un lote de sopas</button>
+  </aside>
+  <section class="board-wrap"><div class="board-head"><div class="row"><span class="item-txt" id="spTit"></span><span class="chip" id="spCont"></span></div><div class="row"><span class="crono" id="spCrono" style="font-size:1.6rem">0:00</span><button class="btn sec sm" id="spSol">Ver soluciones</button></div></div>
+    <div class="sopa-wrap"><div class="sopa-grid" id="spGrid"></div><svg class="sopa-svg" id="spSvg"></svg></div>
+    <div class="sopa-lista" id="spLista"></div><div class="feedback" id="spFb"></div></section></div>`;
+  wireSopas();}
+  pintarCfgSopa(); if(!SP.sopa) nuevaSopa(); else pintarSopa();
+};
+function pintarCfgSopa(){
+  $('#spTema').value=SP.tema; $('#spLetra').value=SP.letra; $('#spProp').value=SP.propias; $('#spTam').value=String(SP.tam); $('#spN').value=String(SP.n); $('#spDir').value=SP.dir; $('#spMay').checked=SP.mayus; $('#spDib').checked=SP.dibujos;
+  $('#spLetraBox').hidden=SP.tema!=='__letra'; $('#spPropBox').hidden=SP.tema!=='__propias';
+}
+function wireSopas(){
+  const cfg=(id,k,num,nueva=true)=>$(id).onchange=e=>{SP[k]=e.target.type==='checkbox'?e.target.checked:num?+e.target.value:e.target.value;guardarSP();pintarCfgSopa();if(nueva)nuevaSopa();else pintarSopa();};
+  cfg('#spTema','tema');cfg('#spLetra','letra');cfg('#spTam','tam',1);cfg('#spN','n',1);cfg('#spDir','dir');cfg('#spMay','mayus',0,false);cfg('#spDib','dibujos',0,false);
+  $('#spProp').onchange=e=>{SP.propias=e.target.value;guardarSP();nuevaSopa();};
+  $('#spNueva').onclick=nuevaSopa; $('#spSol').onclick=()=>{SP.sopa.pal.forEach(p=>{if(!SP.encontradas.includes(p.W))SP.encontradas.push(p.W);});SP.vistas=true;pintarSopa();};
+  $('#spLote').onclick=dialogoLote;
+  let a=null,pend=null;
+  const grid=$('#spGrid');
+  const celdaDe=e=>{const el=document.elementFromPoint(e.clientX,e.clientY);return el&&el.dataset&&el.dataset.r!=null?[+el.dataset.r,+el.dataset.c]:null;};
+  const linea=(s,f)=>{let dr=f[0]-s[0],dc=f[1]-s[1];const L=Math.max(Math.abs(dr),Math.abs(dc));if(!L)return [s];
+    const ang=Math.round(Math.atan2(dr,dc)/(Math.PI/4));const d=[[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]][(ang+8)%8];
+    const out=[];for(let i=0;i<=L;i++){const r=s[0]+d[0]*i,c=s[1]+d[1]*i;if(r<0||c<0||r>=SP.sopa.N||c>=SP.sopa.N)break;out.push([r,c]);}return out;};
+  grid.addEventListener('pointerdown',e=>{const c=celdaDe(e);if(!c)return;e.preventDefault();grid.setPointerCapture(e.pointerId);a=c;dibujarTemp([c]);});
+  grid.addEventListener('pointermove',e=>{if(!a)return;const c=celdaDe(e);if(c)dibujarTemp(linea(a,c));});
+  grid.addEventListener('pointerup',e=>{if(!a)return;const c=celdaDe(e)||a;let cells;
+    if(c[0]===a[0]&&c[1]===a[1]){ if(pend){cells=linea(pend,c);pend=null;} else {pend=a;a=null;dibujarTemp([pend],true);return;} }
+    else {cells=linea(a,c);pend=null;}
+    a=null; comprobarSopa(cells); dibujarTemp([]);});
+}
+function nuevaSopa(){
+  const lista=palabrasTema(); if(lista.length<2){toast('Necesito al menos 2 palabras','info');return;}
+  SP.sopa=crearSopa(lista,SP.tam,SP.dir,SP.n); SP.encontradas=[]; SP.vistas=false; SP.t0=Date.now(); $('#spFb').className='feedback';
+  clearInterval(SP.int); SP.int=setInterval(()=>{if(!$('#spCrono')||!$('#v-sopas').classList.contains('active'))return;if(SP.sopa&&SP.encontradas.length<SP.sopa.pal.length){const s=Math.floor((Date.now()-SP.t0)/1000);$('#spCrono').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}},500);
+  pintarSopa();
+}
+const COL_SOPA=['#fde047','#86efac','#93c5fd','#f9a8d4','#fdba74','#c4b5fd','#67e8f9','#fca5a5','#bef264','#fcd34d','#a5b4fc','#5eead4','#f0abfc','#fed7aa','#bae6fd'];
+function pintarSopa(){
+  const s=SP.sopa; if(!s)return; const N=s.N;
+  const ancho=Math.min($('.sopa-wrap').parentElement.clientWidth-8,640); const cel=Math.max(24,Math.min(56,Math.floor(ancho/N)));
+  const g=$('#spGrid'); g.style.gridTemplateColumns=`repeat(${N},${cel}px)`; g.style.fontSize=Math.round(cel*.55)+'px';
+  g.innerHTML=s.g.flatMap((row,r)=>row.map((ch,c)=>`<div data-r="${r}" data-c="${c}" style="height:${cel}px">${SP.mayus?ch:ch.toLowerCase()}</div>`)).join('');
+  const svg=$('#spSvg'); svg.setAttribute('width',cel*N); svg.setAttribute('height',cel*N); svg.setAttribute('viewBox',`0 0 ${cel*N} ${cel*N}`); SP.cel=cel;
+  const nombre=SP.tema==='__letra'?'Palabras con '+SP.letra:SP.tema==='__propias'?'Mis palabras':SP.tema.startsWith('__lec')?'Cartilla: '+LECCIONES[+SP.tema.slice(5)].t:SP.tema;
+  $('#spTit').textContent='Sopa de letras · '+nombre;
+  dibujarEncontradas(); pintarListaSopa();
+}
+function capsula(p,col,cel,op=.55){const x1=p.c*cel+cel/2,y1=p.r*cel+cel/2,x2=p.c2*cel+cel/2,y2=p.r2*cel+cel/2;return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${cel*.78}" stroke-linecap="round" opacity="${op}"/>`;}
+function dibujarEncontradas(){const s=SP.sopa;$('#spSvg').innerHTML=`<g id="spFound">${s.pal.map((p,i)=>SP.encontradas.includes(p.W)?capsula(p,COL_SOPA[i%COL_SOPA.length],SP.cel):'').join('')}</g><g id="spTemp"></g>`;}
+function dibujarTemp(cells,pend){const g=$('#spTemp');if(!g)return;if(!cells.length){g.innerHTML='';return;}const a=cells[0],b=cells.at(-1);g.innerHTML=capsula({r:a[0],c:a[1],r2:b[0],c2:b[1]},pend?'#60a5fa':'#2563eb',SP.cel,.3);}
+function pintarListaSopa(){
+  const s=SP.sopa;
+  $('#spLista').innerHTML=s.pal.map((p,i)=>{const f=SP.encontradas.includes(p.W);return `<span class="sp-w ${f?'ok':''}" style="${f?`background:${COL_SOPA[i%COL_SOPA.length]}`:''}">${SP.dibujos&&p.e?`<span class="sp-e">${p.e}</span>`:''}${SP.mayus?p.W:p.W.toLowerCase()}</span>`;}).join('');
+  $('#spCont').textContent=`${SP.encontradas.length} / ${s.pal.length}`;
+}
+function comprobarSopa(cells){
+  if(cells.length<2)return; const s=SP.sopa;
+  const txt=cells.map(([r,c])=>s.g[r][c]).join(''); const inv=[...txt].reverse().join('');
+  const a=cells[0],b=cells.at(-1);
+  const p=s.pal.find(p=>!SP.encontradas.includes(p.W)&&((p.r===a[0]&&p.c===a[1]&&p.r2===b[0]&&p.c2===b[1])||(p.r===b[0]&&p.c===b[1]&&p.r2===a[0]&&p.c2===a[1])))
+        ||s.pal.find(p=>!SP.encontradas.includes(p.W)&&(p.W===txt||p.W===inv));
+  if(!p)return;
+  SP.encontradas.push(p.W);
+  // usar la posición real de lo marcado
+  Object.assign(p,{r:a[0],c:a[1],r2:b[0],c2:b[1]});
+  hablar(p.w); dibujarEncontradas(); pintarListaSopa();
+  if(SP.encontradas.length===s.pal.length&&!SP.vistas){const seg=Math.round((Date.now()-SP.t0)/1000);
+    const g=registrar('sopa',{i:$('#spTit').textContent.replace('Sopa de letras · ',''),ok:s.pal.length,tot:s.pal.length,pct:100,seg});
+    const fb=$('#spFb');fb.className='feedback show good';fb.innerHTML=`<span class="stars">★★★</span><div>¡Has encontrado todas las palabras en ${Math.floor(seg/60)}:${String(seg%60).padStart(2,'0')}!${g?' Guardado.':''} <button class="btn sm" onclick="nuevaSopa()">Otra sopa</button></div>`;}
+}
+/* --- lote imprimible --- */
+function dialogoLote(){
+  modal('Imprimir un lote de sopas',`<p class="muted">Se crean sopas distintas con la configuración actual (tema, tamaño, direcciones y número de palabras).</p>
+   <div class="row"><label class="f" style="flex:1">¿Cuántas?<input type="number" id="ltN" value="10" min="1" max="60"></label><label class="f" style="flex:1">Por hoja<select id="ltP"><option value="1">1 (grande)</option><option value="2">2</option></select></label></div>
+   <label class="f">Temas<select id="ltT"><option value="uno">Solo el tema elegido</option><option value="todos">Un tema distinto en cada sopa</option></select></label>
+   <div class="checks"><label><input type="checkbox" id="ltS" checked> Añadir solucionario al final</label><label><input type="checkbox" id="ltD" ${SP.dibujos?'checked':''}> Lista con dibujos</label></div>
+   <label class="f">Nombre<input type="text" id="ltNom" value="${esc(alumnoActivo()?.nombre||'')}"></label>`,[{t:'Cancelar'},{t:'Crear lote',c:'',f:crearLote}]);
+}
+function crearLote(){
+  const n=Math.max(1,Math.min(60,+$('#ltN').value||1)), porHoja=+$('#ltP').value, varios=$('#ltT').value==='todos', sol=$('#ltS').checked, dib=$('#ltD').checked, nom=$('#ltNom').value;
+  const temas=Object.keys(TEMAS_SOPA); const temaOrig=SP.tema; const sopas=[];
+  for(let i=0;i<n;i++){ if(varios)SP.tema=temas[i%temas.length]; const lista=palabrasTema(); const s=crearSopa(lista,SP.tam,SP.dir,SP.n); s.tema=SP.tema.startsWith('__')?($('#spTit').textContent.replace('Sopa de letras · ','')):SP.tema; sopas.push(s);}
+  SP.tema=temaOrig;
+  const may=t=>SP.mayus?t:t.toLowerCase();
+  const mmCel=porHoja===1?Math.min(14,160/SP.tam):Math.min(9,100/SP.tam);
+  const tabla=(s,cel,solu)=>`<div class="g" style="grid-template-columns:repeat(${s.N},${cel}mm);font-size:${cel*2}pt">${s.g.flatMap((row,r)=>row.map((ch,c)=>{const en=solu&&s.pal.some(p=>{const L=p.W.length,dr=Math.sign(p.r2-p.r),dc=Math.sign(p.c2-p.c);for(let k=0;k<L;k++)if(p.r+dr*k===r&&p.c+dc*k===c)return true;return false;});return `<div style="height:${cel}mm;${en?'background:#fde047':''}">${may(ch)}</div>`;})).join('')}</div>`;
+  const dirTxt={facil:'→ ↓',medio:'→ ↓ ↘',dificil:'en todas las direcciones'}[SP.dir];
+  let html='';
+  sopas.forEach((s,i)=>{
+    html+=`<section class="sopa ${porHoja===1||i%2===0?'nueva':''}">${porHoja===1||i%2===0?`<header><img src="LOGO.jpg" alt="" onerror="this.remove()"><div><h1>Sopa de letras</h1><div class="sub">Busca las palabras ${dirTxt}</div></div><div class="d">Nombre: <b>${esc(nom)||'____________________'}</b><br>Fecha: ______________</div></header>`:''}
+      <h2>${i+1}. ${esc(s.tema)}</h2>${tabla(s,mmCel,false)}<div class="l">${s.pal.map(p=>`<span>☐ ${dib&&p.e?p.e+' ':''}${may(p.W)}</span>`).join('')}</div></section>`;
+  });
+  if(sol){html+=`<section class="nueva"><h1 style="color:#0f2f6b">Solucionario</h1><div class="sols">${sopas.map((s,i)=>`<div><h2>${i+1}. ${esc(s.tema)}</h2>${tabla(s,Math.min(5,60/s.N),true)}</div>`).join('')}</div></section>`;}
+  const w=window.open('','_blank'); if(!w){toast('Permite las ventanas emergentes','error');return;}
+  w.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><base href="${location.href}"><title>Sopas de letras</title><style>
+  @page{size:A4 portrait;margin:12mm} body{font-family:Arial,Helvetica,sans-serif;margin:0;color:#1e293b}
+  .bar{position:sticky;top:0;background:#eff6ff;padding:10px;text-align:center}.bar button{font:inherit;font-weight:700;padding:10px 22px;border:none;border-radius:10px;background:#2563eb;color:#fff}
+  .sopa,.nueva{width:186mm;margin:0 auto 6mm}.nueva{break-before:page}.sopa:first-of-type{break-before:auto}
+  header{display:flex;align-items:center;gap:4mm;border-bottom:2px solid #1e3a8a;padding-bottom:3mm;margin-bottom:4mm}header img{height:15mm}header h1{margin:0;font-size:17pt;color:#0f2f6b}.sub{font-size:10pt;color:#475569}.d{margin-left:auto;font-size:11pt;line-height:1.8}
+  h2{font-size:13pt;color:#0f2f6b;margin:3mm 0 2mm}
+  .g{display:grid;border:2px solid #1e3a8a;width:max-content;margin:0 auto}.g div{display:grid;place-items:center;font-weight:700;border:.3px solid #cbd5e1}
+  .l{display:flex;flex-wrap:wrap;gap:2mm 6mm;justify-content:center;margin-top:4mm;font-size:13pt;font-weight:700}
+  .sols{display:grid;grid-template-columns:1fr 1fr;gap:6mm}.sols h2{font-size:10pt}.sols .g div{font-weight:600;border-width:.2px}
+  @media print{.bar{display:none}}</style></head><body><div class="bar"><button onclick="print()">🖨 Imprimir</button></div>${html}</body></html>`);
   w.document.close();
 }
 
