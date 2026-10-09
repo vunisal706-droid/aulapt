@@ -275,6 +275,36 @@ table.abn .vac{border:none;background:transparent;min-width:0}
 table.abn td.foco{background:#fef9c3;outline:3px solid #facc15;outline-offset:-3px}
 table.abn td{height:52px;font-size:1.35rem}
 .abn-dib{font-size:2rem;letter-spacing:4px;margin-bottom:6px}
+/* Columnas con llevadas */
+table.colop{border-collapse:separate;border-spacing:6px 2px;margin:6px auto 4px;font-family:'Andika',var(--font-body)}
+table.colop th{font-size:1rem;padding-bottom:2px}
+table.colop td{width:64px;height:58px;text-align:center;font-size:2.4rem;font-weight:800;border-radius:10px;color:#0f172a}
+table.colop tr.ll td{height:30px;font-size:1.15rem}
+table.colop tr.bt td{border-bottom:4px solid #334155;border-radius:0}
+table.colop td.sg{width:34px;color:#334155}
+table.colop tr.rs td{background:#f8fafc;border:2px dashed #cbd5e1}
+table.colop td.foco{background:#fef9c3}
+table.colop tr.rs td.foco{border-color:#facc15}
+table.colop td.nuevo{color:var(--color-success);animation:correctPulse .4s}
+@keyframes correctPulse{50%{transform:scale(1.15)}}
+.llev{color:#dc2626;font-weight:800}
+.pide{color:#dc2626;font-weight:800;font-size:1.15rem}
+table.colop s{text-decoration-color:#dc2626;text-decoration-thickness:3px;color:#94a3b8}
+.trucos{background:#fffbeb;border:2px solid #fde68a;border-radius:16px;padding:12px 16px;text-align:left}
+.trucos ul{margin:6px 0 0;padding-left:20px;line-height:1.5}
+/* Tablas */
+.tablas-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:520px;margin:12px auto}
+.tabla-b{border:none;border-radius:16px;min-height:70px;font-family:var(--font-display);font-size:1.7rem;font-weight:800;color:#fff;cursor:pointer;background:hsl(var(--h),70%,50%);box-shadow:0 4px 0 hsl(var(--h),70%,38%)}
+.tabla-b:active{transform:translateY(3px);box-shadow:0 1px 0 hsl(var(--h),70%,38%)}
+.tabla-lista{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;max-width:460px;margin:12px auto;font-family:'Andika',var(--font-body);font-size:1.5rem;text-align:left}
+.tabla-lista b{color:var(--color-primary-dark)}
+.dedos{display:flex;gap:6px;justify-content:center;margin:12px 0 4px;align-items:flex-end}
+.dedos i{width:18px;height:70px;border-radius:9px 9px 4px 4px;background:#fdba74;border:2px solid #c2410c}
+.dedos i:nth-child(6){margin-left:16px}
+.dedos i.baja{height:26px;background:#e2e8f0;border-color:#94a3b8}
+.grupos{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0;color:#2563eb;font-size:1.1rem;letter-spacing:2px}
+.grupos span{border:2px solid #bfdbfe;border-radius:10px;padding:2px 6px;background:#eff6ff}
+table.colop tr.rs td:first-child{border:none;background:none}
 
 </style>
 </head>
@@ -1185,7 +1215,7 @@ function serie(cont,{mod,nombre,total=10,gen,volver}){
     cont.innerHTML=`<div class="progress"><i style="width:${100*i/total}%"></i></div><div class="ex-card"><div class="row" style="justify-content:space-between"><span class="chip">${esc(nombre)}</span><span class="muted small">${i+1} / ${total} · ✓ ${ok}</span></div><div id="exItem"></div><div class="res" id="exRes"></div><div id="exNext"></div></div>`;
     let hecho=false;
     gen(i).render($('#exItem'),(acierto,correcta)=>{
-      if(hecho)return; hecho=true; if(acierto)ok++;
+      if(hecho||cont._serie!==tok||!cont.isConnected)return; hecho=true; if(acierto)ok++;
       const r=$('#exRes'); r.className='res '+(acierto?'ok':'no');
       r.innerHTML=acierto?'✓ ¡Correcto!':`✗ No es correcto.${correcta!=null?' La respuesta es: <b>'+correcta+'</b>':''}`;
       if(acierto) setTimeout(()=>{i++;pintar();},900);
@@ -1641,6 +1671,149 @@ NUM_EXTRA.series=(run,R)=>run(()=>{
     $$('.opt',el).forEach(b=>b.onclick=()=>{const ok=+b.dataset.k===c;b.classList.add(ok?'ok':'no');$$('.opt',el).forEach(x=>x.disabled=true);if(!ok)$$('.opt',el).find(x=>+x.dataset.k===c).classList.add('ok');done(ok,null);});
   }};
 });
+
+/* ===================== SUMAS Y RESTAS CON LLEVADAS · TABLAS ===================== */
+ACT_NUM.push(
+ {id:'llevadas',g:'Cálculo',t:'Sumas y restas con llevadas',d:'En columnas, paso a paso. En la resta, las unidades le piden 1 al vecino'},
+ {id:'tablas',g:'Cálculo',t:'Tablas de multiplicar',d:'Aprende cada tabla con sus trucos y practica'}
+);
+const COLN=['u','d','c','m','x']; // x = decenas de millar
+const COLT={u:'U',d:'D',c:'C',m:'UM',x:'DM'};
+const NOMCOL={u:'unidades',d:'decenas',c:'centenas',m:'unidades de millar',x:'decenas de millar'};
+const TRUCOS_OP={
+ suma:['Empieza siempre por la derecha: primero las <b>unidades</b>.','Si en una columna te sale <b>10 o más</b>, escribes abajo las unidades y <b>te llevas 1</b> a la columna de al lado.','La llevada se escribe pequeñita arriba del vecino para no olvidarla.','Comprueba: sumar 9 es sumar 10 y quitar 1.'],
+ resta:['El número <b>mayor</b> va siempre arriba.','Empieza por la derecha: primero las <b>unidades</b>.','Si el de arriba es más pequeño, no se puede quitar: <b>las unidades le piden 1 al vecino</b>. El vecino baja uno y las unidades ganan 10.','Si el vecino tiene 0, él pide primero a su vecino.','Comprueba con una suma: resultado + número de abajo = número de arriba.']
+};
+const LV={op:'suma',nd:2};
+function genLlevada(op,nd){
+  const lo=Math.pow(10,nd-1), hi=Math.pow(10,nd)-1;
+  for(let g=0;g<500;g++){
+    let a=lo+rnd(hi-lo+1), b=lo+rnd(hi-lo+1);
+    if(op==='resta'){ if(a<b)[a,b]=[b,a]; if(a===b)continue; const A=String(a).split('').reverse(),B=String(b).split('').reverse(); if(B.some((d,i)=>+d>+(A[i]||0)))return [a,b]; }
+    else { const A=String(a).split('').reverse(),B=String(b).split('').reverse(); if(A.some((d,i)=>+d+(+(B[i]||0))>=10))return [a,b]; }
+  }
+  return op==='suma'?[48,37]:[52,27];
+}
+NUM_EXTRA.llevadas=(run,R)=>{
+  const cont=$('#nuEx');
+  const pinta=()=>{cont.innerHTML=`<div class="ex-card"><h2>Sumas y restas con llevadas</h2>
+    <div class="row" style="justify-content:center;gap:16px;margin:8px 0 14px"><div class="seg" id="lvOp"><button data-v="suma" class="${LV.op==='suma'?'on':''}">➕ Sumas</button><button data-v="resta" class="${LV.op==='resta'?'on':''}">➖ Restas</button></div>
+    <div class="seg" id="lvNd">${[2,3,4].map(n=>`<button data-v="${n}" class="${LV.nd===n?'on':''}">${n} cifras</button>`).join('')}</div></div>
+    <div class="trucos"><b>💡 Trucos</b><ul>${TRUCOS_OP[LV.op].map(t=>`<li>${t}</li>`).join('')}</ul></div>
+    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn sec big" id="lvDemo">▶ Ver ejemplo</button><button class="btn big" id="lvGo">Practicar</button></div></div>`;
+    $('#lvOp').onclick=e=>{const b=e.target.closest('button');if(b){LV.op=b.dataset.v;pinta();}};
+    $('#lvNd').onclick=e=>{const b=e.target.closest('button');if(b){LV.nd=+b.dataset.v;pinta();}};
+    $('#lvGo').onclick=()=>run(()=>{const [a,b]=genLlevada(LV.op,LV.nd);return itemColumnas(LV.op,a,b);});
+    $('#lvDemo').onclick=()=>{const [a,b]=LV.op==='suma'?(LV.nd===2?[47,38]:LV.nd===3?[358,276]:[4587,2635]):(LV.nd===2?[52,27]:LV.nd===3?[503,128]:[6042,2718]);
+      cont.innerHTML='<div class="ex-card" id="lvD"></div><div class="row" style="justify-content:center;margin-top:12px"><button class="btn sec" id="lvV">◀ Volver</button><button class="btn" id="lvP">Practicar ahora</button></div>';
+      itemColumnas(LV.op,a,b,true).render($('#lvD'),()=>{}); $('#lvV').onclick=pinta; $('#lvP').onclick=()=>$('#lvGo')?.click()||run(()=>{const [x,y]=genLlevada(LV.op,LV.nd);return itemColumnas(LV.op,x,y);});};
+  };
+  pinta();
+};
+function itemColumnas(op,a,b,demo=false){
+  return {render:(el,done)=>{
+    const suma=op==='suma';
+    const A=String(a).split('').reverse().map(Number), B=String(b).split('').reverse().map(Number);
+    const n=Math.max(A.length,B.length)+(suma?1:0);
+    const top=Array.from({length:n},(_,i)=>A[i]??null), bot=Array.from({length:n},(_,i)=>B[i]??null);
+    const carry=Array(n).fill(0), res=Array(n).fill(null); let err=0,i=0;
+    const cols=[...Array(n).keys()].reverse();
+    el.innerHTML=`${demo?'<span class="chip">Ejemplo</span>':''}<div class="prob-txt">${suma?'Suma':'Resta'}: <b>${a} ${suma?'+':'−'} ${b}</b></div>
+      <table class="colop"><tr class="hd"><td></td>${cols.map(k=>`<th class="udc-${COLN[k]}"><span class="udc udc-${COLN[k]}"><b>${COLT[COLN[k]]}</b></span></th>`).join('')}</tr>
+      <tr class="ll"><td></td>${cols.map(k=>`<td id="ll${k}"></td>`).join('')}</tr>
+      <tr class="tp"><td></td>${cols.map(k=>`<td id="tp${k}">${top[k]??''}</td>`).join('')}</tr>
+      <tr class="bt"><td class="sg">${suma?'+':'−'}</td>${cols.map(k=>`<td id="bt${k}">${bot[k]??''}</td>`).join('')}</tr>
+      <tr class="rs"><td></td>${cols.map(k=>`<td id="rs${k}"></td>`).join('')}</tr></table>
+      <div class="abn-paso" id="coP"></div>`;
+    const foco=k=>{$$('.colop td,.colop th',el).forEach(t=>t.classList.remove('foco'));if(k!=null)['tp','bt','rs','ll'].forEach(p=>$('#'+p+k).classList.add('foco'));};
+    const nom=k=>NOMCOL[COLN[k]];
+    const ultimo=()=>{for(let k=n-1;k>=0;k--){if(top[k]!=null||bot[k]!=null||carry[k])return k;}return 0;};
+    const preguntar=(txt,sol,cb,extra='')=>{
+      const p=$('#coP');p.innerHTML=`${extra}<div class="abn-q">${txt}</div><div class="row" style="justify-content:center;margin-top:8px"><input type="number" inputmode="numeric" id="coIn" style="width:140px;font-size:2rem;text-align:center;font-weight:800" aria-label="Respuesta"><button class="btn ok" id="coOk">✓</button></div><div class="res" id="coR"></div>`;
+      const inp=$('#coIn'); if(!demo)inp.focus();
+      const ok=()=>{if(inp.value==='')return;if(+inp.value!==sol){err++;$('#coR').className='res no';$('#coR').textContent='✗ Casi. Vuelve a contar, despacio.';inp.select();return;}cb();};
+      $('#coOk').onclick=ok; inp.onkeydown=e=>{if(e.key==='Enter')ok();};
+      if(demo)setTimeout(()=>{if(!inp.isConnected)return;inp.value=sol;setTimeout(()=>{if(inp.isConnected)ok();},800);},1500);
+    };
+    const aviso=(html,boton,cb)=>{const p=$('#coP');p.innerHTML=`<div class="abn-q">${html}</div><button class="btn big" id="coB" style="margin-top:10px">${boton}</button>`;$('#coB').onclick=cb;if(demo)setTimeout(()=>{if($('#coB'))cb();},2400);};
+    const escribir=(k,v)=>{res[k]=v;$('#rs'+k).textContent=v;$('#rs'+k).classList.add('nuevo');};
+    const pedir=k=>{ // la columna k pide 1 a k+1
+      const j=k+1; if(top[j]===0) pedir(j);
+      top[j]--; top[k]+=10;
+      $('#tp'+j).innerHTML=`<s>${$('#tp'+j).textContent.replace(/\D/g,'').slice(-1)}</s>`; $('#ll'+j).innerHTML=`<span class="pide">${top[j]}</span>`;
+      $('#ll'+k).innerHTML=`<span class="pide">${top[k]}</span>`;
+    };
+    const paso=()=>{
+      if(i>ultimo()&&!(suma&&carry[i])){fin();return;}
+      foco(i); const k=i;
+      if(suma){
+        const t=top[k]??0,bb=bot[k]??0,c=carry[k],s=t+bb+c;
+        if(top[k]==null&&bot[k]==null&&c){escribir(k,c);i++;paso();return;}
+        const expr=[c?`<span class="llev">${c}</span>`:null,top[k]!=null?t:null,bot[k]!=null?bb:null].filter(x=>x!=null).join(' + ');
+        preguntar(`Columna de las <b class="udc-${COLN[k]}">${nom(k)}</b>: ${expr} =`,s,()=>{
+          if(s<10){escribir(k,s);i++;paso();return;}
+          preguntar(`Te sale <b>${s}</b>. ¿Qué número escribes abajo, en las ${nom(k)}?`,s%10,()=>{escribir(k,s%10);carry[k+1]=1;$('#ll'+(k+1)).innerHTML='<span class="llev">1</span>';
+            aviso(`Escribes el <b>${s%10}</b> y <b>te llevas 1</b> a las <b class="udc-${COLN[k+1]}">${nom(k+1)}</b>. ¡Apúntalo arriba para no olvidarlo!`,'Seguir ▶',()=>{i++;paso();});});
+        });
+      } else {
+        const bb=bot[k]??0;
+        if(top[k]<bb){
+          aviso(`Arriba hay un <b>${top[k]}</b> y abajo un <b>${bb}</b>. ¡No se puede quitar! Las <b class="udc-${COLN[k]}">${nom(k)}</b> le piden 1 al vecino de las <b class="udc-${COLN[k+1]}">${nom(k+1)}</b>.${top[k+1]===0?' Como el vecino tiene 0, primero pide él a su vecino.':''}`,'🙋 Pedir 1 al vecino',()=>{
+            pedir(k);
+            aviso(`El vecino baja uno y las ${nom(k)} ahora tienen <b>${top[k]}</b>.`,'Restar ▶',()=>preguntar(`${top[k]} − ${bb} =`,top[k]-bb,()=>{escribir(k,top[k]-bb);i++;paso();}));});
+          return;}
+        if(bot[k]==null){aviso(`Abajo no hay nada en las ${nom(k)}: <b>bajamos el ${top[k]}</b>.`,'Seguir ▶',()=>{escribir(k,top[k]);i++;paso();});return;}
+        preguntar(`Columna de las <b class="udc-${COLN[k]}">${nom(k)}</b>: ${top[k]} − ${bb} =`,top[k]-bb,()=>{escribir(k,top[k]-bb);i++;paso();});
+      }
+    };
+    const fin=()=>{foco(null);
+      // quitar ceros a la izquierda
+      for(let k=n-1;k>0&&res[k]===0;k--){$('#rs'+k).textContent='';}
+      const sol=suma?a+b:a-b;
+      $('#coP').innerHTML=`<div class="abn-q" style="color:var(--color-success)">✓ ${a} ${suma?'+':'−'} ${b} = <b>${sol}</b></div>${suma?'':`<div class="small muted" style="margin-top:6px">Comprueba: ${sol} + ${b} = ${a}</div>`}`;
+      if(!demo)setTimeout(()=>done(err<=1,`${a} ${suma?'+':'−'} ${b} = ${sol}`),1500);};
+    paso();
+  }};
+}
+/* --- Tablas de multiplicar --- */
+const TRUCOS_TABLA={
+ 1:['Cualquier número por 1 es el mismo número: 1 × 8 = 8.','Es la tabla más fácil: ¡ya te la sabes!'],
+ 2:['Multiplicar por 2 es hacer el <b>doble</b>: sumar el número dos veces. 2 × 7 = 7 + 7 = 14.','Todos los resultados son <b>pares</b>: acaban en 0, 2, 4, 6 u 8.','Cuenta de 2 en 2: 2, 4, 6, 8, 10…'],
+ 3:['Es el doble y una vez más: 3 × 6 = 6 + 6 + 6 = 18.','Cuenta de 3 en 3: 3, 6, 9, 12, 15, 18, 21, 24, 27, 30.','Si sabes la del 2, suma una vez más: 2 × 7 = 14, y 14 + 7 = 21.'],
+ 4:['Es el <b>doble del doble</b>: 4 × 7 → el doble de 7 es 14, y el doble de 14 es 28.','Todos los resultados son pares.'],
+ 5:['Los resultados acaban siempre en <b>0 o en 5</b>.','Es la <b>mitad de la del 10</b>: 5 × 8 → 8 × 10 = 80, y la mitad es 40.','Mira el reloj: cada número son 5 minutos.'],
+ 6:['Es el <b>doble de la del 3</b>: 6 × 4 → 3 × 4 = 12, y el doble es 24.','Con números pares: 6 × 4 = 24, 6 × 6 = 36, 6 × 8 = 48. Acaba en el mismo número y delante va la mitad.'],
+ 7:['¡Ya sabes casi toda! 7 × 2 = 2 × 7, 7 × 5 = 5 × 7… El orden no importa.','Solo te quedan pocas nuevas: 7 × 7 = 49 y 7 × 8 = 56.','Truco: 5, 6, 7, 8 → <b>56 = 7 × 8</b>.'],
+ 8:['Es el <b>doble, del doble, del doble</b>: 8 × 3 → 6, 12, 24.','Las unidades bajan de 2 en 2: 8, 16, 24, 32, 40… (8, 6, 4, 2, 0).','8 × un número = 10 veces el número menos 2 veces: 8 × 6 = 60 − 12 = 48.'],
+ 9:['Con los <b>dedos</b>: para 9 × 4 baja el cuarto dedo. A la izquierda quedan 3 (decenas) y a la derecha 6 (unidades): 36.','Las dos cifras del resultado suman 9: 18 (1+8), 27 (2+7), 36 (3+6)…','La decena es uno menos que el número: 9 × 7 → empieza por 6 → 63.'],
+ 10:['Pon un <b>0</b> al final del número: 10 × 7 = 70.','Cuenta de 10 en 10: 10, 20, 30…']
+};
+const TB={t:2};
+NUM_EXTRA.tablas=(run)=>{
+  const cont=$('#nuEx');
+  const menu=()=>{cont.innerHTML=`<div class="ex-card"><h2>Tablas de multiplicar</h2><p class="muted">Elige una tabla para ver sus trucos y practicarla.</p><div class="tablas-grid">${[1,2,3,4,5,6,7,8,9,10].map(t=>`<button class="tabla-b" data-t="${t}" style="--h:${t*36}">×${t}</button>`).join('')}</div>
+    <div class="trucos" style="margin-top:14px"><b>💡 Para todas las tablas</b><ul><li>El orden no importa: <b>3 × 8 = 8 × 3</b>. Cada tabla que aprendes te ayuda con las demás.</li><li>Multiplicar es sumar el mismo número varias veces: 4 × 3 = 3 + 3 + 3 + 3.</li><li>Empieza por las fáciles: 1, 2, 5 y 10. Luego 3, 4, 6, 9. Y al final 7 y 8.</li></ul></div>
+    <button class="btn big" id="tbMix" style="margin-top:12px">Todas mezcladas</button></div>`;
+    $$('[data-t]',cont).forEach(b=>b.onclick=()=>{TB.t=+b.dataset.t;ficha();});
+    $('#tbMix').onclick=()=>run(()=>{const t=2+rnd(9),k=1+rnd(10);return itemTabla(t,k);});};
+  const ficha=()=>{const t=TB.t;
+    cont.innerHTML=`<div class="ex-card"><div class="row" style="justify-content:space-between"><button class="btn sec sm" id="tbV">◀ Tablas</button><h2 style="margin:0">Tabla del ${t}</h2><button class="btn sec sm" id="tbVoz">🔊 Escuchar</button></div>
+      <div class="tabla-lista" id="tbL">${[1,2,3,4,5,6,7,8,9,10].map(k=>`<div><span>${t} × ${k} =</span> <b class="tbr">${t*k}</b></div>`).join('')}</div>
+      <label class="small"><input type="checkbox" id="tbTapar"> Tapar los resultados</label>
+      <div class="trucos" style="margin-top:12px"><b>💡 Trucos de la tabla del ${t}</b><ul>${TRUCOS_TABLA[t].map(x=>`<li>${x}</li>`).join('')}</ul>${t===9?dedos9(4):''}</div>
+      <div class="row" style="justify-content:center;margin-top:14px"><button class="btn big" id="tbOrd">Practicar en orden</button><button class="btn big" id="tbSal">Practicar salteada</button></div></div>`;
+    $('#tbV').onclick=menu;
+    $('#tbTapar').onchange=e=>$$('.tbr',cont).forEach(x=>x.style.visibility=e.target.checked?'hidden':'');
+    $('#tbVoz').onclick=()=>hablar([1,2,3,4,5,6,7,8,9,10].map(k=>`${t} por ${k}, ${t*k}`).join('. '),0.75);
+    $('#tbOrd').onclick=()=>serieTabla(run,t,false); $('#tbSal').onclick=()=>serieTabla(run,t,true);};
+  menu();
+};
+function serieTabla(run,t,salteada){const ks=salteada?shuffle([1,2,3,4,5,6,7,8,9,10]):[1,2,3,4,5,6,7,8,9,10];NU.n=10;run(i=>itemTabla(t,ks[i%10]));}
+function dedos9(k){return `<div class="dedos" aria-label="Truco de los dedos para 9 por ${k}">${Array.from({length:10},(_,i)=>`<i class="${i+1===k?'baja':''}"></i>`).join('')}</div><div class="small" style="text-align:center">9 × ${k}: a la izquierda <b>${k-1}</b> dedos, a la derecha <b>${10-k}</b> → <b>${9*k}</b></div>`;}
+function itemTabla(t,k){
+  const grupos=`<div class="grupos">${Array.from({length:k},()=>`<span>${'●'.repeat(t)}</span>`).join('')}</div><div class="small muted">${k} ${k===1?'grupo':'grupos'} de ${t}</div>`;
+  return itemNumero({q:'¿Cuánto es?',big:`${t} × ${k}`,correcta:t*k,pista:(TRUCOS_TABLA[t]||[])[0]+(t===9?dedos9(k):'')+'<details style="margin-top:6px"><summary>Ver dibujo</summary>'+grupos+'</details>'});
+}
 
 /* ===================== FUNCIONES EJECUTIVAS ===================== */
 const FF={tab:'agenda',edit:false,auto:0,paso:0};
