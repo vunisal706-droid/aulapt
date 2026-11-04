@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Regletas Mágicas · CEIP Capitulaciones</title>
+<meta name="theme-color" content="#7c83ff">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<!-- PANTALLA DE INICIO -->
+<div class="inicio" id="inicio">
+  <div class="inicio-card">
+    <img src="LOGO.jpg" alt="CEIP Capitulaciones" class="logo-inicio" onerror="this.remove()">
+    <div class="rodillos" aria-hidden="true">
+      <i style="--v:1;--col:#fff"></i><i style="--v:2;--col:#E31F26"></i><i style="--v:3;--col:#8DC63F"></i><i style="--v:4;--col:#F8A6C6"></i><i style="--v:5;--col:#FEDD00"></i>
+    </div>
+    <h1>Regletas Mágicas</h1>
+    <p>¡Aprende matemáticas jugando con las regletas!</p>
+    <input type="text" id="nombreJugador" placeholder="¿Cómo te llamas?" maxlength="14" autocomplete="off">
+    <button class="btn-grande" id="btnJugar">¡A JUGAR!</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app" hidden>
+  <header class="cabecera">
+    <img src="LOGO.jpg" alt="" class="logo-mini" onerror="this.remove()">
+    <h1 class="titulo">Regletas Mágicas</h1>
+    <div class="stats">
+      <span class="stat" title="Puntos">⭐ <b id="puntos">0</b></span>
+      <span class="stat" title="Racha de aciertos">🔥 <b id="racha">0</b></span>
+    </div>
+    <nav class="modos">
+      <button class="btn-modo" data-modo="libre">🎈 <span class="txt">Libre</span></button>
+      <button class="btn-modo" data-modo="retos">🎯 <span class="txt">Retos</span></button>
+      <button class="btn-modo" data-modo="oaoa">🧠 <span class="txt">Juegos OAOA</span></button>
+      <button class="btn-icono" id="btnSonido" title="Sonido">🔊</button>
+    </nav>
+  </header>
+
+  <section class="instr" id="instr">
+    <div class="instr-principal">
+      <div class="instr-texto" id="instrTexto"></div>
+      <div class="opciones" id="opciones"></div>
+    </div>
+    <div class="instr-lateral">
+      <div class="progreso" id="progreso" hidden>
+        <span id="progresoTxt"></span>
+        <div class="barra"><i id="progresoBar"></i></div>
+      </div>
+      <div class="acciones-reto" id="accionesReto" hidden>
+        <button class="btn-peq" id="btnPista">💡 Pista</button>
+        <button class="btn-peq" id="btnReiniciar">↺ Repetir</button>
+        <button class="btn-peq" id="btnSaltar">⏭ Saltar</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="herramientas">
+    <div class="grupo">
+      <button class="btn-herr" id="btnGirar" disabled>↻ <span class="txt">Girar</span></button>
+      <button class="btn-herr" id="btnQuitar" disabled>✖ <span class="txt">Quitar</span></button>
+      <button class="btn-herr" id="btnBorrar">🧹 <span class="txt">Borrar todo</span></button>
+    </div>
+    <div class="grupo">
+      <button class="btn-toggle" data-ver="num">🔢 <span class="txt">Números</span></button>
+      <button class="btn-toggle" data-ver="marcas">📏 <span class="txt">Cuadritos</span></button>
+      <button class="btn-toggle" data-ver="sumas">➕ <span class="txt">Sumas</span></button>
+    </div>
+  </section>
+
+  <main class="tablero-wrap" id="tableroWrap">
+    <div class="tablero-caja">
+      <div class="regla" id="regla"></div>
+      <div class="tablero" id="tablero"><div class="preview" id="preview" hidden></div></div>
+    </div>
+  </main>
+
+  <footer class="paleta" id="paleta"></footer>
+</div>
+
+<div class="modal-fondo" id="modal" hidden><div class="modal" id="modalCaja"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="juego.js"></script>
+<script>(function(){var A='Víctor Manuel Única Salas · CEIP Capitulaciones de Santa Fe',O='https://vunisal706-droid.github.io/aulapt/regletas/';function poner(){if(!document.body||document.getElementById('capi-autoria'))return;var d=document.createElement('div');d.id='capi-autoria';d.setAttribute('aria-hidden','true');d.textContent='\u00a9 CEIP Capitulaciones \u00b7 CC BY-NC-SA';d.title=A;d.style.cssText='position:fixed;left:6px;bottom:4px;z-index:2147483000;font:10px/1.2 system-ui,sans-serif;color:rgba(60,60,60,.6);background:rgba(255,255,255,.55);padding:1px 5px;border-radius:6px;pointer-events:none';document.body.appendChild(d);var h=location.hostname,ok=!h||/(^|\.)vunisal706-droid\.github\.io$|(^|\.)colegiocapitulaciones\.com$|^localhost$|^127\.0\.0\.1$/.test(h);if(!ok&&!document.getElementById('capi-original')){var b=document.createElement('div');b.id='capi-original';b.innerHTML='Este juego es una obra del <b>CEIP Capitulaciones de Santa Fe</b>. <a href="'+O+'" style="color:#ffd54a">Juega a la versi\u00f3n original</a>';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:2147483001;background:#0b3a7e;color:#fff;font:13px/1.4 system-ui,sans-serif;padding:6px 10px;text-align:center';document.body.appendChild(b)}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',poner);else poner();})();</script>
+</body>
+</html>

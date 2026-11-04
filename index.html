@@ -675,6 +675,7 @@ INITS.home=()=>{
     <button class="mod" data-go="fono"><span class="ic" style="background:var(--c-fono)">b·d</span><h3>Fonología, lectura y ortografía</h3><p>Conciencia fonológica, b/d/p/q, palabra y dibujo, completar, ordenar, separar palabras, reglas ortográficas y dictados.</p></button>
     <button class="mod" data-go="num"><span class="ic" style="background:var(--c-num)">12</span><h3>Matemáticas</h3><p>Numeración con U, D, C y UM, recta numérica, tabla del 100, cálculo mental OAOA, ABN, problemas y series.</p></button>
     <button class="mod" data-go="ffee"><span class="ic" style="background:var(--c-ffee)">⏱</span><h3>Funciones Ejecutivas</h3><p>Agenda de la sesión, temporizador visual, autoinstrucciones, memoria de trabajo y atención.</p></button>
+    <a class="mod" href="./regletas/" target="_blank" rel="noopener"><span class="ic" style="background:#f58220">▭</span><h3>Regletas Mágicas</h3><p>Regletas que encajan en la cuadrícula: descomponer, amigos del 10, dobles, restas, multiplicar y juegos OAOA.</p></a>
     <a class="mod" href="https://vunisal706-droid.github.io/lectura/" target="_blank" rel="noopener"><span class="ic" style="background:var(--c-comp)">?</span><h3>Comprensión Lectora</h3><p>Abre la app de comprensión lectora del centro.</p></a>
     <button class="mod" data-go="alumnos"><span class="ic" style="background:var(--c-alum)">☺</span><h3>Alumnado y progreso</h3><p>Fichas del alumnado, letras a reforzar, evolución, informe y copia de seguridad.</p></button>
   </div>`;
@@ -2481,16 +2482,13 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px rgba(37,99,235,.15)
   })();
   // Novedades (una sola vez en cada dispositivo)
   (function(){
-    var ID='2026-10-21-diseno', K='novedades-aulapt';
+    var ID='2026-11-04-regletas', K='novedades-aulapt';
     function ver(){ try{ if(localStorage.getItem(K)===ID) return; }catch(e){ return; }
       var d=document.createElement('div');
       d.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px';
       d.innerHTML='<div role="dialog" aria-modal="true" style="background:#fff;border-radius:22px;max-width:440px;width:100%;padding:22px 22px 18px;box-shadow:0 30px 70px -20px rgba(27,37,89,.5);color:#1b2559">'+
         '<div style="font-family:var(--font-display);font-size:1.35rem;font-weight:800;margin-bottom:10px">✨ Novedades</div>'+
-        '<ul style="margin:0 0 16px;padding-left:20px;line-height:1.55;font-size:.97rem">'+
-        '<li><b>Nuevo diseño</b>: cada módulo es un <b>cuaderno de espiral</b> con su color.</li>'+
-        '<li>Botones y opciones más vistosos y fáciles de tocar en la tableta y la pizarra.</li>'+
-        '<li>Todo funciona igual que antes: solo cambia la apariencia.</li></ul>'+
+        '<p style="margin:0 0 16px;line-height:1.55;font-size:.97rem"><b>Nuevo: Regletas Mágicas</b>. Regletas que encajan en la cuadrícula, sumas automáticas, retos por niveles y juegos OAOA. Está en el inicio.</p>'+
         '<button type="button" style="width:100%;border:0;border-radius:14px;padding:12px;font-size:1rem;font-weight:800;color:#fff;cursor:pointer;background:linear-gradient(135deg,#4c7cf5,#2563eb 50%,#1d4ed8)">¡Entendido!</button></div>';
       function cerrar(){ try{ localStorage.setItem(K,ID); }catch(e){} d.remove(); }
       d.querySelector('button').onclick=cerrar; d.addEventListener('click',function(e){ if(e.target===d) cerrar(); });
