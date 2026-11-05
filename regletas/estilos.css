@@ -153,3 +153,36 @@ button{font-family:inherit;cursor:pointer;border:none}
   .instr-texto{font-size:17px}
   .btn-modo{padding:6px 12px;font-size:18px}
 }
+
+/* Móvil: cabecera compacta y paleta en escalera */
+.tablero-wrap{overflow:hidden}
+.paleta{flex-wrap:nowrap}
+.paleta.escalera{gap:8px;padding:6px 8px 18px}
+.paleta.escalera .pal-num{font-size:13px;line-height:17px;padding:0 6px}
+@media (max-width:600px){
+  .cabecera{flex-wrap:nowrap;gap:6px;padding:6px 8px}
+  .logo-mini{height:30px}
+  .titulo{display:none}
+  .stat{font-size:15px;padding:1px 8px}
+  .modos{gap:4px;flex-wrap:nowrap}
+  .btn-modo{padding:4px 9px;font-size:16px}
+  .btn-icono{width:32px;font-size:15px}
+  .instr{margin:6px 6px 0;padding:6px 10px;min-height:0;border-width:2px}
+  .instr-texto{font-size:15px}
+  .opcion{font-size:20px;min-width:46px;padding:4px 10px}
+  .herramientas{padding:4px 6px 0}
+  .btn-herr,.btn-toggle{padding:4px 9px;font-size:14px}
+  .tablero-wrap{padding:4px 6px}
+  .regla{height:20px}.regla span{line-height:20px}
+}
+@media (max-height:500px) and (orientation:landscape){
+  .cabecera{padding:4px 10px}.logo-mini{height:28px}.titulo{font-size:18px}
+  .btn-modo{padding:3px 10px;font-size:15px}
+  .instr{margin:4px 8px 0;padding:4px 10px;min-height:0}
+  .instr-texto{font-size:15px}
+  .herramientas{padding:3px 8px 0}
+  .btn-herr,.btn-toggle{padding:3px 9px;font-size:13px}
+  .tablero-wrap{padding:3px 8px}
+  .paleta{padding:4px 8px 16px}
+  .pal-num{font-size:12px;line-height:15px}
+}

@@ -1,7 +1,7 @@
 'use strict';
 /* ===================== Regletas Mágicas v2 · CEIP Capitulaciones ===================== */
-const AVISO_KEY = 'regletas_aviso_v2';
-const AVISO_TXT = 'Las regletas ahora encajan en la cuadrícula y miden los cuadraditos de su número. Además: sumas automáticas, retos por niveles y juegos OAOA.';
+const AVISO_KEY = 'regletas_aviso_v3';
+const AVISO_TXT = 'En el móvil las regletas ya no se amontonan: la cuadrícula y las regletas se ajustan a la pantalla.';
 
 const REG = {
   1:{c:'#FFFFFF',n:'blanca',t:'#333'},       2:{c:'#E31F26',n:'roja',t:'#fff'},
@@ -86,11 +86,13 @@ const board = $('#tablero'), preview = $('#preview');
 
 function medir(){
   const wrap=$('#tableroWrap');
-  const W=wrap.clientWidth-26, H=wrap.clientHeight-26-24;
-  let U=Math.floor(W/20);
-  U=Math.max(W<600?28:22,Math.min(52,U));
-  if(H/U<7) U=Math.max(18,Math.floor(H/7));
-  return {U,COLS:Math.max(10,Math.floor(W/U)),ROWS:Math.max(5,Math.floor(H/U))};
+  const W=wrap.clientWidth-26, H=wrap.clientHeight-12-26;
+  // Móvil en vertical: 10 cuadraditos de ancho (la recta del 1 al 10). Resto: unas 20 columnas.
+  let U=Math.min(52, Math.floor(W/(W<600?10:20)));
+  const minF=W<600?4:5;
+  if(H/U<minF) U=Math.floor(H/minF);
+  U=Math.max(14,U);
+  return {U,COLS:Math.max(Math.min(10,Math.floor(W/U)),Math.min(40,Math.floor(W/U))),ROWS:Math.max(2,Math.floor(H/U))};
 }
 function layout(){
   board.style.width=board.style.height='0px';
@@ -115,14 +117,18 @@ function layout(){
 
 function construirPaleta(){
   const pal=$('#paleta');
-  const P=Math.max(10,Math.min(26,Math.round(S.U*.55)));
+  // La paleta siempre cabe: en móvil vertical, escalera de regletas de pie; si no, todas en una fila
+  const ancho=Math.max(280,window.innerWidth-24), esc=window.innerWidth<600&&window.innerHeight>window.innerWidth;
+  pal.classList.toggle('escalera',esc);
+  let P=esc?Math.max(12,Math.min(20,Math.floor((ancho-9*8)/10),Math.floor(window.innerHeight*.022))):26;
+  if(!esc){ const cabe=q=>{let t=9*12+20;for(let v=1;v<=10;v++)t+=Math.max(v*q,28);return t<=ancho;}; while(P>9&&!cabe(P))P--; }
   pal.innerHTML='';
   for(let v=1;v<=10;v++){
     const it=document.createElement('div'); it.className='pal-item';
-    const r=document.createElement('div'); r.className='pieza';
-    r.style.cssText=`--u:${P}px;width:${v*P}px;height:${P}px;--col:${REG[v].c};--txt:${REG[v].t}`;
+    const r=document.createElement('div'); r.className='pieza'+(esc?' vert':'');
+    r.style.cssText=esc?`--u:${P}px;width:${P}px;height:${v*P}px;`:`--u:${P}px;width:${v*P}px;height:${P}px;`; r.style.cssText+=`--col:${REG[v].c};--txt:${REG[v].t}`;
     r.title=`Regleta ${color(v)} (${v})`;
-    r.addEventListener('pointerdown',e=>empezarDrag(e,{v,vert:false}));
+    r.addEventListener('pointerdown',e=>empezarDrag(e,{v,vert:esc}));
     const n=document.createElement('span'); n.className='pal-num'; n.textContent=v;
     it.append(r,n); pal.appendChild(it);
   }
@@ -584,7 +590,10 @@ document.addEventListener('keydown',e=>{
   if(e.key==='r'||e.key==='R'||e.key===' ') { e.preventDefault(); girar(pieza(S.sel)); }
   if(e.key==='Delete'||e.key==='Backspace'){ quitar(S.sel); cambio(); }
 });
-let rzT; window.addEventListener('resize',()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ if(!$('#app').hidden) layout(); },150); });
+let rzT; const relayout=()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ if(!$('#app').hidden) layout(); },120); };
+window.addEventListener('resize',relayout);
+// Si cambia el hueco del tablero (texto de instrucciones más largo, paleta…), se recoloca
+let tamWrap=''; if(window.ResizeObserver) new ResizeObserver(()=>{ const w=$('#tableroWrap'), t=w.clientWidth+'x'+w.clientHeight; if(t!==tamWrap){ tamWrap=t; relayout(); } }).observe($('#tableroWrap'));
 
 /* ===================== INICIO ===================== */
 function iniciar(){
