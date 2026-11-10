@@ -186,3 +186,116 @@ button{font-family:inherit;cursor:pointer;border:none}
   .paleta{padding:4px 8px 16px}
   .pal-num{font-size:12px;line-height:15px}
 }
+
+/* ═══════════ Versión 3: el viaje de Regli ═══════════ */
+.btn-leer{width:38px;height:38px;border-radius:50%;background:#e8f4ff;font-size:17px;box-shadow:0 3px 0 #b9d3ee;flex:none}
+.btn-leer:active,.btn-peq:active,.btn-herr:active,.btn-modo:active,.btn-mapa:active{transform:translateY(2px)}
+.btn-icono{height:40px}
+.btn-icono.off{filter:grayscale(1);opacity:.5}
+
+/* Regli */
+.regli{width:54px;flex:none;align-self:flex-end;margin:-4px 0 -8px;transform-origin:50% 100%;animation:respira 3.2s ease-in-out infinite}
+.regli svg{display:block;width:100%;height:auto;filter:drop-shadow(0 4px 0 rgba(0,0,0,.12))}
+.regli.feliz{animation:salto .55s ease-in-out 3}
+.regli.ups{animation:temblor .35s 2}
+.regli.piensa{animation:ladea 1.6s ease-in-out infinite}
+@keyframes respira{50%{transform:scaleY(1.035)}}
+@keyframes salto{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-14px) scale(1.04,.97)}70%{transform:translateY(0) scale(1.06,.92)}}
+@keyframes ladea{50%{transform:rotate(-6deg)}}
+
+/* El reto, como bocadillo de Regli */
+.instr{position:relative;border-color:#ffd9a8;background:#fffdf7;box-shadow:0 6px 0 rgba(245,130,32,.14)}
+.instr-principal{position:relative}
+.instr-texto{font-size:21px}
+
+/* Regletas con más cuerpo */
+.pieza{border-radius:7px;border-color:rgba(0,0,0,.45);
+  background-image:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.08) 42%,rgba(0,0,0,.14)),var(--marca);
+  box-shadow:0 4px 0 rgba(0,0,0,.26),0 7px 10px rgba(0,0,0,.12)}
+.pieza.vert{background-image:linear-gradient(90deg,rgba(255,255,255,.6),rgba(255,255,255,.08) 42%,rgba(0,0,0,.14)),var(--marca)}
+.pieza.nueva{animation:cae .34s cubic-bezier(.3,1.5,.5,1)}
+@keyframes cae{from{transform:translateY(-16px) scale(1.08);opacity:.5}}
+.pieza.sel{outline:4px solid #ffb300;animation:late 1s ease-in-out infinite}
+@keyframes late{50%{outline-offset:5px}}
+.tablero{border-radius:12px;border-width:4px;background-color:#fffef9;box-shadow:0 10px 0 rgba(59,65,153,.16),0 18px 30px rgba(80,90,170,.18)}
+.badge{border-radius:14px;padding:1px 10px;animation:pop .25s}
+.opcion{min-width:62px;font-size:26px;border:3px solid #e2c968}
+.opcion:hover{background:#ffe98f}
+.btn-peq,.btn-herr,.btn-toggle{border-radius:16px;padding:6px 13px}
+.barra{height:12px}.barra i{background:linear-gradient(90deg,#ffb400,#ff7a59)}
+
+/* ── Mapa ── */
+.inicio{height:100dvh;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;overflow:hidden}
+.mapa-cab{display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(255,255,255,.9);box-shadow:0 3px 14px rgba(80,90,170,.12);flex-wrap:wrap}
+.mapa-cab h1{font-size:26px;color:var(--azul-osc);line-height:1}
+.mapa-acc{margin-left:auto;display:flex;gap:8px}
+.btn-mapa{padding:8px 16px;border-radius:20px;font-size:17px;font-weight:800;color:var(--texto);background:#eef0ff;box-shadow:0 4px 0 #c9cdee}
+.btn-mapa.libre{background:#e3f9ea;box-shadow:0 4px 0 #9fdcb3}
+.btn-mapa.clase{background:#fff3c4;box-shadow:0 4px 0 #e2c968}
+.mapa-saludo{display:flex;align-items:flex-end;gap:10px;padding:10px 16px 0;max-width:900px;width:100%;margin:0 auto}
+.mapa-saludo .regli{width:64px;margin:0}
+.bocadillo{position:relative;background:#fff;border:3px solid #ffd9a8;border-radius:20px;padding:10px 16px;font-size:20px;font-weight:600;line-height:1.25;margin-bottom:22px;box-shadow:0 5px 0 rgba(245,130,32,.14)}
+.bocadillo b{color:var(--azul-osc)}
+.bocadillo::before{content:"";position:absolute;left:-13px;bottom:14px;width:20px;height:20px;background:#fff;border-left:3px solid #ffd9a8;border-bottom:3px solid #ffd9a8;transform:rotate(45deg);border-radius:0 0 0 5px}
+.mapa-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px 14px 22px;overflow:auto}
+.mapa{position:relative;width:100%;max-width:1100px;max-height:100%}
+.mapa svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 5px 0 rgba(120,90,40,.16))}
+.parada{position:absolute;transform:translate(-50%,-50%);background:none;display:flex;flex-direction:column;align-items:center;gap:1px;width:clamp(84px,11vw,128px);color:var(--texto)}
+.parada .bola{position:relative;width:clamp(56px,7.4vw,86px);aspect-ratio:1;border-radius:50%;background:var(--col);border:4px solid #fff;display:grid;place-items:center;
+  box-shadow:0 6px 0 rgba(0,0,0,.22),0 0 0 3px rgba(0,0,0,.28),inset 0 -8px 0 rgba(0,0,0,.12),inset 0 8px 0 rgba(255,255,255,.35);transition:transform .15s}
+.parada .em{font-size:clamp(26px,3.4vw,40px);line-height:1;filter:drop-shadow(0 2px 0 rgba(255,255,255,.6))}
+.parada .num{position:absolute;left:-8px;top:-8px;min-width:26px;height:26px;border-radius:13px;background:#fff;border:2.5px solid var(--azul-osc);color:var(--azul-osc);font-weight:800;font-size:15px;line-height:21px}
+.parada .nom{font-weight:800;font-size:clamp(12px,1.35vw,16px);line-height:1.05;background:rgba(255,255,255,.92);border-radius:10px;padding:2px 8px;margin-top:5px;white-space:nowrap}
+.parada .est{font-size:clamp(13px,1.5vw,18px);color:#ffb400;letter-spacing:1px;line-height:1;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.parada .est i{font-style:normal;color:#d5d8ea;text-shadow:none}
+.parada:hover .bola{transform:translateY(-4px) scale(1.05)}
+.parada:active .bola{transform:translateY(3px)}
+.parada.cerrada .bola{filter:saturate(.55) brightness(1.08);opacity:.6}
+.parada.cerrada .nom{opacity:.6}
+.parada.siguiente .bola{animation:llama 1.1s ease-in-out infinite}
+@keyframes llama{50%{transform:translateY(-7px) scale(1.07);box-shadow:0 13px 0 rgba(0,0,0,.14),0 0 0 3px rgba(0,0,0,.28),0 0 0 10px rgba(255,180,0,.35),inset 0 -8px 0 rgba(0,0,0,.12),inset 0 8px 0 rgba(255,255,255,.35)}}
+.parada.no{animation:temblor .35s}
+
+/* ── Para la clase ── */
+.pestanas-clase{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.pestanas-clase button{padding:7px 14px;border-radius:16px;background:#eef0ff;font-weight:800;font-size:16px;color:var(--texto);box-shadow:0 3px 0 #c9cdee}
+.pestanas-clase button.on{background:var(--azul);color:#fff;box-shadow:0 3px 0 var(--azul-osc)}
+.medida{display:grid;gap:12px;background:#f7f8ff;border:2px solid #e1e4fb;border-radius:16px;padding:14px}
+.medida label{display:grid;gap:5px;font-weight:800;font-size:16px}
+.medida select{font:inherit;font-weight:600;font-size:16px;padding:8px 10px;border-radius:12px;border:2px solid #cfd3f0;background:#fff;max-width:100%}
+.nums{display:flex;gap:6px;flex-wrap:wrap}
+.nums button{min-width:42px;height:42px;border-radius:12px;background:#fff;border:2px solid #cfd3f0;font-weight:800;font-size:18px;color:var(--texto)}
+.nums button.on{background:#ffb400;border-color:#c98a00;color:#3a2a00}
+.medida .btn-modal{justify-self:start}
+.modal h3.sub{font-size:19px;color:var(--azul-osc);margin:16px 0 4px}
+.ajustes{display:grid;gap:10px}
+.interruptor{display:flex;gap:12px;align-items:flex-start;background:#f7f8ff;border:2px solid #e1e4fb;border-radius:14px;padding:10px 14px;font-size:15px;cursor:pointer}
+.interruptor input{width:24px;height:24px;margin-top:3px;flex:none;accent-color:var(--azul)}
+.interruptor b{display:block;font-size:17px;color:var(--azul-osc)}
+.fin-regli{width:90px;margin:0 auto 4px;animation:salto .6s ease-in-out infinite}
+.fin-regli svg{width:100%;height:auto;display:block}
+
+@media (max-width:700px){
+  .mapa-cab h1{font-size:20px}
+  .btn-mapa{padding:6px 11px;font-size:15px}
+  .btn-mapa span{display:none}
+  .bocadillo{font-size:16px;padding:8px 12px;margin-bottom:16px}
+  .mapa-saludo .regli{width:50px}
+  .parada{width:104px}
+  .parada .bola{width:62px}
+  .parada .em{font-size:30px}
+  .parada .nom{font-size:13px}
+  .mapa-wrap{align-items:flex-start;padding-top:22px}
+  .regli{width:40px}
+  .instr-texto{font-size:16px}
+  .btn-leer{width:32px;height:32px;font-size:14px}
+}
+@media (max-height:500px) and (orientation:landscape){
+  .regli{width:34px}.instr-texto{font-size:15px}
+  .mapa-saludo{display:none}
+  .mapa-cab{padding:4px 10px}.mapa-cab h1{font-size:18px}
+  .parada .nom{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){
+  body,.regli,.regli.feliz,.regli.piensa,.parada.siguiente .bola,.pieza.nueva,.pieza.sel,.fin-regli{animation:none}
+}

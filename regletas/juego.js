@@ -1,7 +1,7 @@
 'use strict';
 /* ===================== Regletas Mágicas v2 · CEIP Capitulaciones ===================== */
-const AVISO_KEY = 'regletas_aviso_v3';
-const AVISO_TXT = 'En el móvil las regletas ya no se amontonan: la cuadrícula y las regletas se ajustan a la pantalla.';
+const AVISO_KEY = 'regletas_aviso_v4';
+const AVISO_TXT = 'Ahora hay un mapa con trece paradas, Regli te lee los retos en voz alta y el profe puede preparar retos a medida.';
 
 const REG = {
   1:{c:'#FFFFFF',n:'blanca',t:'#333'},       2:{c:'#E31F26',n:'roja',t:'#fff'},
@@ -17,7 +17,7 @@ const chip = v => `<span class="chip" style="--n:${Math.min(v,10)};--col:${REG[v
 const nm = v => `<b>${color(v)}</b> ${chip(v)}`;
 
 const S = {
-  nombre:'', puntos:0, racha:0, modo:'libre', sonido:true,
+  puntos:0, racha:0, modo:'libre', sonido:true, voz:true, todo:false, estrellas:{}, nueva:0,
   ver:{num:true, marcas:true, sumas:true},
   piezas:[], nextId:1, sel:null, lastTap:0,
   U:40, COLS:20, ROWS:8,
@@ -27,12 +27,14 @@ const S = {
 /* ---------- Persistencia ---------- */
 function cargar(){
   try{ const d = JSON.parse(localStorage.getItem('regletas_v2')||'{}');
-    if(d.nombre) S.nombre=d.nombre; if(d.puntos) S.puntos=d.puntos;
+    if(d.puntos) S.puntos=d.puntos;
     if(d.ver) Object.assign(S.ver,d.ver); if(d.sonido===false) S.sonido=false;
+    if(d.voz===false) S.voz=false; if(d.todo) S.todo=true;
+    if(d.estrellas) S.estrellas=d.estrellas;
   }catch(e){}
 }
 function guardar(){
-  try{ localStorage.setItem('regletas_v2', JSON.stringify({nombre:S.nombre,puntos:S.puntos,ver:S.ver,sonido:S.sonido})); }catch(e){}
+  try{ localStorage.setItem('regletas_v2', JSON.stringify({puntos:S.puntos,ver:S.ver,sonido:S.sonido,voz:S.voz,todo:S.todo,estrellas:S.estrellas})); }catch(e){}
 }
 
 /* ---------- Sonido (un solo AudioContext) ---------- */
@@ -80,6 +82,56 @@ function confeti(){
   }
 }
 function actualizarStats(){ $('#puntos').textContent=S.puntos; $('#racha').textContent=S.racha; }
+
+/* ---------- Regli, la regleta que acompaña ---------- */
+function regliSVG(animo){
+  const boca = animo==='feliz' ? '<path d="M21 43q9 11 18 0z" fill="#7a2a00"/><path d="M25 47q5 4 10 0" fill="#ff8fa3"/>'
+    : animo==='piensa' ? '<path d="M24 46q6-3 12 1" fill="none" stroke="#7a2a00" stroke-width="2.6" stroke-linecap="round"/>'
+    : animo==='ups' ? '<ellipse cx="30" cy="46" rx="4" ry="5" fill="#7a2a00"/>'
+    : '<path d="M22 43q8 8 16 0" fill="none" stroke="#7a2a00" stroke-width="2.6" stroke-linecap="round"/>';
+  const ojos = animo==='feliz'
+    ? '<path d="M16 30q5-7 10 0M34 30q5-7 10 0" fill="none" stroke="#3d1d00" stroke-width="3" stroke-linecap="round"/>'
+    : `<ellipse cx="21" cy="29" rx="6.5" ry="7.5" fill="#fff" stroke="#3d1d00" stroke-width="1.5"/><ellipse cx="39" cy="29" rx="6.5" ry="7.5" fill="#fff" stroke="#3d1d00" stroke-width="1.5"/>
+       <circle cx="${animo==='piensa'?23:22}" cy="${animo==='piensa'?26:30}" r="3.2" fill="#3d1d00"/><circle cx="${animo==='piensa'?41:40}" cy="${animo==='piensa'?26:30}" r="3.2" fill="#3d1d00"/>
+       <circle cx="23" cy="28" r="1.1" fill="#fff"/><circle cx="41" cy="28" r="1.1" fill="#fff"/>`;
+  const brazos = animo==='feliz'
+    ? '<path d="M8 52q-9-8-6-18M52 52q9-8 6-18" fill="none" stroke="#c9620e" stroke-width="5" stroke-linecap="round"/>'
+    : animo==='piensa' ? '<path d="M8 58q-8 6-5 15M52 56q9-3 4-14" fill="none" stroke="#c9620e" stroke-width="5" stroke-linecap="round"/>'
+    : '<path d="M8 58q-8 6-5 15M52 58q8 6 5 15" fill="none" stroke="#c9620e" stroke-width="5" stroke-linecap="round"/>';
+  return `<svg viewBox="-4 0 68 112" aria-hidden="true">${brazos}
+    <path d="M20 98v8M40 98v8" stroke="#c9620e" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="18" cy="107" rx="7" ry="3.5" fill="#7a2a00"/><ellipse cx="42" cy="107" rx="7" ry="3.5" fill="#7a2a00"/>
+    <rect x="8" y="6" width="44" height="94" rx="12" fill="#F58220" stroke="#3d1d00" stroke-width="2.5"/>
+    <rect x="12" y="10" width="12" height="86" rx="6" fill="rgba(255,255,255,.3)"/>
+    <path d="M9 62h42M9 74h42M9 86h42" stroke="rgba(61,29,0,.35)" stroke-width="2"/>
+    <circle cx="14" cy="38" r="4" fill="#ff9d7a" opacity=".8"/><circle cx="46" cy="38" r="4" fill="#ff9d7a" opacity=".8"/>
+    ${ojos}${boca}</svg>`;
+}
+let regliT;
+function regli(animo, ms){
+  const el=$('#regli'); if(!el) return;
+  el.innerHTML=regliSVG(animo); el.className='regli '+(animo||'');
+  clearTimeout(regliT); if(ms) regliT=setTimeout(()=>regli(''),ms);
+}
+
+/* ---------- Voz: Regli lee los retos (para quien todavía no lee) ---------- */
+function textoPlano(html){
+  const d=document.createElement('div'); d.innerHTML=html;
+  return d.textContent.replace(/¿\?/g,'cuánto').replace(/\s+/g,' ').replace(/[🎈🎨🔒💡👀😅🔥]/gu,'').trim();
+}
+function decir(html){
+  if(!('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(textoPlano(html));
+    u.lang='es-ES'; u.rate=.92; u.pitch=1.15;
+    const v=speechSynthesis.getVoices().find(v=>/^es(-|_)ES/i.test(v.lang))||speechSynthesis.getVoices().find(v=>/^es/i.test(v.lang));
+    if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function callar(){ try{ if('speechSynthesis' in window) speechSynthesis.cancel(); }catch(e){} }
+function hablar(html){ if(S.voz) decir(html); }
 
 /* ===================== TABLERO ===================== */
 const board = $('#tablero'), preview = $('#preview');
@@ -189,12 +241,13 @@ function render(){
   $('#paleta').classList.toggle('ocultar-num',ocultar);
   for(const p of S.piezas){
     const el=document.createElement('div');
-    el.className='pieza'+(p.vert?' vert':'')+(p.locked?' fija':'')+(S.sel===p.id?' sel':'');
+    el.className='pieza'+(p.vert?' vert':'')+(p.locked?' fija':'')+(S.sel===p.id?' sel':'')+(S.nueva===p.id?' nueva':'');
     el.dataset.id=p.id;
     el.style.cssText=`left:${p.c*U}px;top:${p.r*U}px;width:${(p.vert?1:p.v)*U}px;height:${(p.vert?p.v:1)*U}px;--col:${REG[p.v].c};--txt:${REG[p.v].t}`;
     if(!ocultar) el.innerHTML=`<span>${p.v}</span>`;
     board.appendChild(el);
   }
+  S.nueva=0;
   if(S.ver.sumas && !ocultar) dibujarSumas();
   $('#btnGirar').disabled = $('#btnQuitar').disabled = !S.sel;
 }
@@ -284,7 +337,7 @@ function soltar(e){
     if(p){ p.c=d.c; p.r=d.r; }
     else { p={id:S.nextId++,v:d.v,vert:d.vert,c:d.c,r:d.r}; S.piezas.push(p); }
     S.sel=null; sonido('clic'); cambio(p);
-  } else { toast('Ahí no cabe 😅'); sonido('error'); render(); }
+  } else { toast('Ahí no cabe 😅'); sonido('error'); regli('ups',900); render(); }
 }
 
 /* Tocar una regleta de la paleta la coloca en el primer hueco libre */
@@ -319,6 +372,7 @@ board.addEventListener('pointerdown',e=>{
 });
 
 function cambio(ultima){
+  if(ultima) S.nueva=ultima.id;
   render();
   const R=S.reto;
   if(!R || S.resuelto) return;
@@ -341,14 +395,14 @@ const GEN = {
       check:()=>libres().some(p=>p.v===v) };
   },
   descompone(cfg){
-    const N = cfg.nivel===1 ? rnd(3,10) : rnd(5,10), min = cfg.nivel>=2 ? 3 : 2, r0=S.ROWS-1;
+    const N = cfg.N || (cfg.nivel===1 ? rnd(3,10) : rnd(5,10)), min = cfg.nivel>=2 ? 3 : 2, r0=S.ROWS-1;
     return { texto:`Tapa la regleta ${nm(N)} con <b>${min} o más</b> regletas más pequeñas. Ponlas justo encima.`,
       setup(){ fija(N,0,r0); },
       pista:`El tren de arriba tiene que acabar justo donde acaba la ${color(N)}. Fíjate en la cuadrícula.`,
       check(){ const c=cubre(r0-1,0,N); return !!c && c.length>=min; } };
   },
   completa(cfg){
-    const A = cfg.amigos ? 10 : (cfg.nivel===1 ? rnd(4,10) : rnd(6,10)), B=rnd(1,A-1), r0=S.ROWS-1;
+    const A = cfg.amigos ? 10 : (cfg.N || (cfg.nivel===1 ? rnd(4,10) : rnd(6,10))), B=rnd(1,A-1), r0=S.ROWS-1;
     const texto = cfg.amigos
       ? `Amigos del 10: ¿qué regleta, junto a la ${nm(B)}, mide igual que la ${nm(10)}?`
       : `El tren de arriba no llega. Pon la regleta que falta para que mida igual que la ${nm(A)}.`;
@@ -367,14 +421,15 @@ const GEN = {
   },
   tren(cfg){
     let N,k;
-    if(cfg.nivel===1){ N=rnd(4,10); k=2; }
+    if(cfg.N){ N=Math.min(cfg.N,S.COLS); k=N>10?rnd(2,3):2; }
+    else if(cfg.nivel===1){ N=rnd(4,10); k=2; }
     else { k=rnd(2,3); N=rnd(11,Math.min(20,S.COLS)); }
     return { texto:`Haz un tren que mida <b>${N}</b> con <b>${k} regletas</b>.`,
       pista: N>10 ? `Empieza con la naranja (10) en la primera casilla. ¿Cuánto falta hasta el ${N}?` : `Empieza en la primera casilla: el tren tiene que acabar en el ${N} de la regla.`,
       check:()=>trenes(true).some(t=>t.ps.length===k&&t.len===N) };
   },
-  veces(){
-    const a=rnd(2,5); let k=rnd(2,4); while(a*k>S.COLS) k--;
+  veces(cfg){
+    const a=(cfg&&cfg.N)||rnd(2,5); let k=rnd(2,4); while(a*k>S.COLS) k--;
     return { texto:`Haz un tren con <b>${k}</b> regletas ${nm(a)}.`,
       pista:'Ponlas una detrás de otra, sin dejar huecos.',
       check:()=>trenes(true).some(t=>t.ps.length===k&&t.ps.every(p=>p.v===a)),
@@ -411,8 +466,8 @@ const GEN = {
       pista:'Mira la regleta de arriba y la de abajo del hueco: es una más que la de arriba.',
       check:()=>libres().some(p=>!p.vert&&p.v===m&&p.c===0&&p.r===r0+m-1) };
   },
-  alfombra(){
-    const N=rnd(5,Math.min(10,2*(S.ROWS-1)+1)), total=Math.floor(N/2), r0=S.ROWS-1;
+  alfombra(cfg){
+    const N=(cfg&&cfg.N&&cfg.N<=2*(S.ROWS-1)+1)?cfg.N:rnd(5,Math.min(10,2*(S.ROWS-1)+1)), total=Math.floor(N/2), r0=S.ROWS-1;
     const cuenta=()=>new Set(trenes(true).filter(t=>!t.vert&&t.ps.length===2&&t.len===N)
       .map(t=>Math.min(t.ps[0].v,t.ps[1].v)+'-'+Math.max(t.ps[0].v,t.ps[1].v))).size;
     return { texto:`La alfombra del <b>${N}</b>: encima de la ${nm(N)} haz <b>todos</b> los trenes de 2 regletas que midan lo mismo.`,
@@ -430,51 +485,52 @@ const NIVELES = {
 };
 
 const OAOA = [
-  {em:'🎨',t:'Conocemos las regletas',c:'Inf. 5 años · 1.º',f:'Concreta',
+  {em:'🎨',t:'Conocemos las regletas',k:'Conocemos',c:'Inf. 5 años · 1.º',f:'Concreta',
    p:'Juego libre sin números: construir casas, trenes, ordenar de la más corta a la más larga. Preguntar: ¿cuál es la más larga? ¿cuántas blancas caben en la roja?',
    a:{libre:true}},
-  {em:'🪜',t:'La escalera',c:'Inf. 5 años · 1.º',f:'Concreta → pictórica',
+  {em:'🪜',t:'La escalera',k:'La escalera',c:'Inf. 5 años · 1.º',f:'Concreta → pictórica',
    p:'Ordenar las regletas del 1 al 10 formando una escalera. Después la dibujan en papel cuadriculado.',
    a:{gens:[{g:'escalera'}],total:2,nivel:1}},
-  {em:'🙈',t:'¿Quién se ha escondido?',c:'Inf. 5 años · 1.º',f:'Concreta',
+  {em:'🙈',t:'¿Quién se ha escondido?',k:'¿Quién falta?',c:'Inf. 5 años · 1.º',f:'Concreta',
    p:'Con la escalera hecha, el alumnado cierra los ojos y se quita una regleta. ¿Cuál falta? Trabaja el orden y el «uno más».',
    a:{gens:[{g:'escondida'}],total:5,nivel:1}},
-  {em:'🌈',t:'¿De qué color es?',c:'Inf. 5 años · 1.º',f:'Concreta',
+  {em:'🌈',t:'¿De qué color es?',k:'Colores',c:'Inf. 5 años · 1.º',f:'Concreta',
    p:'Asociar color y cantidad: «busca la amarilla», y luego al revés, «busca el 5». Sin números a la vista.',
    a:{gens:[{g:'colores'}],total:6,nivel:1}},
-  {em:'🚂',t:'Los trenes del número',c:'1.º · 2.º',f:'Concreta → abstracta',
+  {em:'🚂',t:'Los trenes del número',k:'Trenes',c:'1.º · 2.º',f:'Concreta → abstracta',
    p:'Descomponer: tapar una regleta con otras más pequeñas y escribirlo (5 = 2 + 3). Buscar varias formas.',
    a:{gens:[{g:'descompone'}],total:5,nivel:1}},
-  {em:'🧶',t:'La alfombra del número',c:'1.º · 2.º',f:'Pictórica',
+  {em:'🧶',t:'La alfombra del número',k:'La alfombra',c:'1.º · 2.º',f:'Pictórica',
    p:'Todas las parejas que forman un número, una encima de otra. Se ve la simetría: 2 + 3 y 3 + 2.',
    a:{gens:[{g:'alfombra'}],total:2,nivel:1}},
-  {em:'🤝',t:'Los amigos del 10',c:'1.º · 2.º',f:'Concreta → abstracta',
+  {em:'🤝',t:'Los amigos del 10',k:'Amigos del 10',c:'1.º · 2.º',f:'Concreta → abstracta',
    p:'Parejas que forman la naranja (1+9, 2+8…). Base del cálculo mental y de pasar la decena.',
    a:{gens:[{g:'completa',amigos:true}],total:6,nivel:1}},
-  {em:'👯',t:'Dobles y mitades',c:'1.º · 3.º',f:'Concreta → abstracta',
+  {em:'👯',t:'Dobles y mitades',k:'Dobles',c:'1.º · 3.º',f:'Concreta → abstracta',
    p:'Dos regletas iguales forman el doble; partir una regleta en dos iguales es buscar la mitad.',
    a:{gens:[{g:'dobles'}],total:5,nivel:2}},
-  {em:'📏',t:'¿Cuánto falta?',c:'1.º · 3.º',f:'Pictórica',
+  {em:'📏',t:'¿Cuánto falta?',k:'¿Cuánto falta?',c:'1.º · 3.º',f:'Pictórica',
    p:'Comparar dos regletas y buscar la que completa: la resta como diferencia (8 − 3 = 5).',
    a:{gens:[{g:'completa'}],total:5,nivel:2}},
-  {em:'🔟',t:'Pasar la decena',c:'2.º',f:'Pictórica → abstracta',
+  {em:'🔟',t:'Pasar la decena',k:'Pasar del 10',c:'2.º',f:'Pictórica → abstracta',
    p:'Trenes mayores que 10 empezando por la naranja: 13 = 10 + 3. Se mide con la regla de arriba.',
    a:{gens:[{g:'tren'}],total:5,nivel:2}},
-  {em:'✖️',t:'Trenes iguales (multiplicar)',c:'2.º · 3.º',f:'Concreta → abstracta',
+  {em:'✖️',t:'Trenes iguales (multiplicar)',k:'Multiplicar',c:'2.º · 3.º',f:'Concreta → abstracta',
    p:'Repetir la misma regleta: 3 veces la verde clara mide 9. La multiplicación como suma repetida.',
    a:{gens:[{g:'veces'}],total:5,nivel:3}},
-  {em:'🟪',t:'Rectángulos',c:'2.º · 3.º',f:'Pictórica',
+  {em:'🟪',t:'Rectángulos',k:'Rectángulos',c:'2.º · 3.º',f:'Pictórica',
    p:'Regletas iguales una debajo de otra y contar cuadraditos: la multiplicación como área.',
    a:{gens:[{g:'rectangulo'}],total:5,nivel:3}},
-  {em:'🍰',t:'¿Cuántas caben? (repartir)',c:'2.º · 3.º',f:'Concreta → abstracta',
+  {em:'🍰',t:'¿Cuántas caben? (repartir)',k:'Repartir',c:'2.º · 3.º',f:'Concreta → abstracta',
    p:'¿Cuántas regletas pequeñas caben en una grande? La división como medida.',
    a:{gens:[{g:'caben'}],total:5,nivel:3}}
 ];
 
 /* ===================== MOTOR DE RONDAS ===================== */
-function nuevaRonda(titulo,gens,total,nivel){
-  S.ronda={titulo,gens,total,nivel,idx:0,saltados:0,ultimo:null};
-  S.modo='retos'; marcarModo();
+function nuevaRonda(titulo,gens,total,nivel,parada){
+  entrar();
+  S.ronda={titulo,gens,total,nivel,idx:0,saltados:0,ultimo:null,parada:parada==null?null:parada};
+  S.modo=parada==null?'clase':'mapa'; marcarModo();
   siguienteReto();
 }
 function siguienteReto(){
@@ -499,10 +555,13 @@ function pintarInstruccion(){
   $('#progreso').hidden=false; $('#accionesReto').hidden=false;
   $('#progresoTxt').textContent=`${ro.titulo} · Reto ${ro.idx} de ${ro.total}`;
   $('#progresoBar').style.width=((ro.idx-1)/ro.total*100)+'%';
+  $('#btnDado').hidden=true; regli('');
+  if(S.dicho!==R){ S.dicho=R; hablar(R.texto); }
 }
 function mostrarPregunta(){
   const q=S.reto.pregunta;
   $('#instrTexto').innerHTML=`¡Bien colocado! Ahora dime: <b>${q.texto}</b>`;
+  regli('piensa'); hablar('¡Bien colocado! Ahora dime: '+q.texto);
   const s=new Set([q.ok]), deltas=[1,-1,2,-2,3,-3,10];
   while(s.size<4){ const v=q.ok+deltas[rnd(0,deltas.length-1)]; if(v>=0) s.add(v); }
   const ops=$('#opciones'); ops.innerHTML='';
@@ -510,7 +569,7 @@ function mostrarPregunta(){
     const b=document.createElement('button'); b.className='opcion'; b.textContent=v;
     b.onclick=()=>{
       if(v===q.ok){ ops.innerHTML=''; exito(); }
-      else { b.classList.add('mal'); S.racha=0; actualizarStats(); sonido('error'); toast('Cuenta los cuadraditos en la cuadrícula 👀'); }
+      else { b.classList.add('mal'); S.racha=0; actualizarStats(); sonido('error'); regli('ups',900); toast('Cuenta los cuadraditos en la cuadrícula 👀'); }
     };
     ops.appendChild(b);
   });
@@ -518,69 +577,193 @@ function mostrarPregunta(){
 }
 function exito(){
   S.racha++; S.puntos += 10 + Math.min(S.racha,5)*2;
-  actualizarStats(); guardar(); sonido('exito'); confeti();
+  actualizarStats(); guardar(); sonido('exito'); confeti(); regli('feliz',1700);
   toast(['¡Muy bien!','¡Genial!','¡Eso es!','¡Fenomenal!','¡Bravo!'][rnd(0,4)]+(S.racha>=3?` 🔥 ${S.racha} seguidos`:''),true,1600);
   $('#progresoBar').style.width=(S.ronda.idx/S.ronda.total*100)+'%';
   setTimeout(siguienteReto,1800);
 }
 function finRonda(){
   const sal=S.ronda.saltados, est=sal===0?3:sal<=2?2:1;
-  S.puntos+=est*10; actualizarStats(); guardar(); sonido('victoria'); confeti();
-  const ro=S.ronda;
-  modal(`<h2>¡Ronda terminada, ${S.nombre}!</h2>
+  S.puntos+=est*10; actualizarStats(); sonido('victoria'); confeti(); regli('feliz');
+  const ro=S.ronda, pa=ro.parada;
+  if(pa!=null) S.estrellas[pa]=Math.max(S.estrellas[pa]||0,est);
+  guardar();
+  const hayMas=pa!=null && pa<OAOA.length-1;
+  modal(`<div class="fin-regli">${regliSVG('feliz')}</div><h2 style="text-align:center">¡${pa!=null?'Parada superada':'Ronda terminada'}!</h2>
     <div class="estrellas">${'⭐'.repeat(est)}${'☆'.repeat(3-est)}</div>
-    <p style="text-align:center">${sal?`Has saltado ${sal} reto${sal>1?'s':''}.`:'¡Sin saltarte ninguno!'}</p>
-    <div class="botones"><button class="btn-modal" id="mOtra">🔁 Otra ronda</button><button class="btn-modal sec" id="mLibre">🎈 Modo libre</button></div>`, true);
-  $('#mOtra').onclick=()=>{ cerrarModal(); nuevaRonda(ro.titulo,ro.gens,ro.total,ro.nivel); };
-  $('#mLibre').onclick=()=>{ cerrarModal(); modoLibre(); };
+    <p style="text-align:center">${sal?`Has saltado ${sal} reto${sal>1?'s':''}. ¡Repite para conseguir las tres estrellas!`:'¡Sin saltarte ninguno!'}</p>
+    <div class="botones">${hayMas?'<button class="btn-modal" id="mSig">▶ Siguiente parada</button>':''}
+      <button class="btn-modal sec" id="mOtra">🔁 Repetir</button><button class="btn-modal sec" id="mMapa">🗺️ Mapa</button></div>`, true);
+  hablar(pa!=null?'¡Parada superada!':'¡Ronda terminada!');
+  if(hayMas) $('#mSig').onclick=()=>{ cerrarModal(); jugarParada(pa+1); };
+  $('#mOtra').onclick=()=>{ cerrarModal(); nuevaRonda(ro.titulo,ro.gens,ro.total,ro.nivel,pa); };
+  $('#mMapa').onclick=()=>{ cerrarModal(); irMapa(); };
   S.reto=null;
 }
 
 /* ===================== MODOS ===================== */
 function marcarModo(){ document.querySelectorAll('.btn-modo').forEach(b=>b.classList.toggle('activo',b.dataset.modo===S.modo)); }
-function modoLibre(sinNumeros){
-  S.modo='libre'; S.ronda=null; S.reto=null; S.retoSpec=null; S.resuelto=false;
+function modoLibre(sinNumeros,parada){
+  entrar();
+  S.modo=parada!=null?'mapa':'libre'; S.ronda=null; S.reto=null; S.retoSpec=null; S.resuelto=false;
   S.piezas=S.piezas.filter(p=>!p.locked); S.sel=null;
   if(sinNumeros){ S.ver.num=false; pintarToggles(); }
   marcarModo();
   $('#progreso').hidden=true; $('#accionesReto').hidden=true; $('#opciones').innerHTML='';
   $('#instrTexto').innerHTML = sinNumeros
     ? '🎨 <b>Conocemos las regletas</b>: construye lo que quieras y ordénalas de la más corta a la más larga.'
-    : `🎈 <b>Modo libre</b>: arrastra regletas a la cuadrícula. Toca dos veces una regleta para girarla; arrástrala fuera para quitarla.`;
+    : `🎈 <b>Mesa libre</b>: arrastra regletas a la cuadrícula. Toca dos veces una regleta para girarla; arrástrala fuera para quitarla.`;
+  $('#btnDado').hidden=false; regli('');
+  if(parada!=null){
+    // Parada sin retos: se da por visitada al entrar
+    S.estrellas[parada]=3; guardar();
+    $('#opciones').innerHTML='<button class="opcion" id="btnHecho">✔ Ya he jugado</button>';
+    $('#btnHecho').onclick=()=>{ sonido('exito'); confeti(); irMapa(); };
+  }
+  hablar($('#instrTexto').innerHTML);
   render();
 }
-function elegirNivel(){
-  modal(`<h2>🎯 Elige el nivel</h2><div class="niveles">
-    <button class="nivel" data-n="1"><span class="em">🌱</span><span><b>Nivel 1 · hasta 10</b>Infantil 5 años y 1.º: colores, trenes, amigos del 10…</span></button>
-    <button class="nivel" data-n="2"><span class="em">🌿</span><span><b>Nivel 2 · hasta 20</b>1.º y 2.º: pasar la decena, dobles y mitades, restas</span></button>
-    <button class="nivel" data-n="3"><span class="em">🌳</span><span><b>Nivel 3 · multiplicar y repartir</b>2.º y 3.º: trenes iguales, rectángulos, ¿cuántas caben?</span></button>
-  </div>`);
-  document.querySelectorAll('.nivel').forEach(b=>b.onclick=()=>{ cerrarModal(); const n=+b.dataset.n; nuevaRonda(NIVELES[n].titulo,NIVELES[n].gens,10,n); });
+/* ---------- Entrar y salir de la mesa ---------- */
+function entrar(){
+  if(!$('#app').hidden) return;
+  ac(); $('#inicio').hidden=true; $('#app').hidden=false;
+  $('#btnSonido').textContent=S.sonido?'🔊':'🔇'; $('#btnVoz').classList.toggle('off',!S.voz);
+  pintarToggles(); actualizarStats(); layout();
 }
-function panelOAOA(){
-  modal(`<h2>🧠 Juegos OAOA con regletas</h2>
-    <p class="oaoa-intro"><b>OAOA</b> (Otros Algoritmos para las Operaciones Aritméticas): primero con <b>regletas de verdad</b> (fase concreta), después en la <b>pantalla o dibujado en cuadrícula</b> (pictórica) y al final con <b>números</b> (abstracta). Cada juego trae una idea para la clase y su versión para jugar aquí.</p>
+function irMapa(){
+  callar(); S.ronda=null; S.reto=null; S.retoSpec=null; S.piezas=[]; S.sel=null;
+  $('#app').hidden=true; $('#inicio').hidden=false; pintarMapa();
+}
+const abierta = i => S.todo || i===0 || (S.estrellas[i-1]||0)>0 || (S.estrellas[i]||0)>0;
+function jugarParada(i){
+  const j=OAOA[i];
+  if(j.a.libre) modoLibre(true,i); else nuevaRonda(j.t,j.a.gens,j.a.total,j.a.nivel,i);
+}
+
+/* ---------- El mapa: trece paradas en un camino ---------- */
+function pintarMapa(){
+  const m=$('#mapa'), n=OAOA.length, vertical=window.innerWidth<700 && window.innerHeight>window.innerWidth;
+  const pts=[];
+  if(vertical){ // serpiente de tres en tres, de arriba abajo
+    const filas=Math.ceil(n/3);
+    for(let i=0;i<n;i++){ const f=Math.floor(i/3), k=i%3, x=[18,50,82][f%2?2-k:k]; pts.push([x, 8+f*(84/(filas-1))]); }
+    m.style.aspectRatio='10 / 16';
+  }else{ // tres filas en zigzag
+    const filas=[5,4,4]; let i=0;
+    filas.forEach((c,f)=>{ for(let k=0;k<c;k++){ const t=c===5?10+k*20:14+k*24; pts.push([f%2?100-t:t, 17+f*31]); i++; } });
+    m.style.aspectRatio='16 / 8.4';
+  }
+  const W=1000, H=vertical?1600:525, P=pts.map(([x,y])=>[x/100*W,y/100*H]);
+  let d='M'+P[0][0]+' '+P[0][1];
+  for(let i=1;i<P.length;i++){ const a=P[i-1], b=P[i], mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2;
+    d+= Math.abs(a[1]-b[1])<1 ? ` L${b[0]} ${b[1]}` : ` Q${a[0]+(vertical?0:(a[0]>W/2?90:-90))} ${my} ${b[0]} ${b[1]}`; }
+  const total=Object.values(S.estrellas).reduce((s,v)=>s+v,0);
+  const sig=OAOA.findIndex((_,i)=>abierta(i)&&!(S.estrellas[i]>0));
+  m.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <path d="${d}" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${d}" fill="none" stroke="#f3c98b" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${d}" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="4 18" stroke-linecap="round"/></svg>`+
+    OAOA.map((j,i)=>{ const e=S.estrellas[i]||0, ok=abierta(i), col=REG[(i%10)+1];
+      return `<button class="parada${ok?'':' cerrada'}${i===sig?' siguiente':''}${e?' hecha':''}" data-i="${i}" style="left:${pts[i][0]}%;top:${pts[i][1]}%;--col:${col.c};--txt:${col.t}" aria-label="Parada ${i+1}: ${j.t}${ok?'':' (cerrada)'}">
+        <span class="bola"><span class="num">${i+1}</span><span class="em">${ok?j.em:'🔒'}</span></span>
+        <span class="nom">${j.k}</span><span class="est">${'★'.repeat(e)}<i>${'★'.repeat(3-e)}</i></span></button>`; }).join('');
+  m.querySelectorAll('.parada').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i; ac();
+    if(!abierta(i)){ sonido('error'); b.classList.add('no'); setTimeout(()=>b.classList.remove('no'),400);
+      saludo('Esa parada todavía está cerrada. ¡Supera antes la anterior!','ups'); return; }
+    sonido('clic'); jugarParada(i);
+  });
+  $('#mapaEstrellas').textContent=total+' / '+n*3;
+  saludo(total===0 ? '¡Hola! Soy <b>Regli</b>. Toca la <b>parada 1</b> y empezamos el viaje.'
+    : total>=n*3 ? '¡Tienes <b>todas</b> las estrellas! Eres un genio de las regletas.'
+    : sig>=0 ? `¡Seguimos! Te espera la <b>parada ${sig+1}</b>: ${OAOA[sig].t}.` : 'Repite las paradas para conseguir las tres estrellas en todas.', total>=n*3?'feliz':'');
+}
+function saludo(html,animo){ $('#saludoMapa').innerHTML=html; $('#regliMapa').innerHTML=regliSVG(animo||''); $('#regliMapa').className='regli '+(animo||''); }
+
+/* ---------- Para la clase: ideas, retos a medida y ajustes ---------- */
+const MEDIDA = [
+  {id:'descompone', t:'Descomponer un número', d:'Tapar la regleta con otras más pequeñas', min:3, max:10},
+  {id:'alfombra',   t:'La alfombra de un número', d:'Todas las parejas que lo forman', min:5, max:10},
+  {id:'completa',   t:'¿Cuánto falta hasta…?', d:'La resta como diferencia', min:4, max:10},
+  {id:'tren',       t:'Trenes que miden…', d:'Sumas hasta el 20', min:4, max:20},
+  {id:'veces',      t:'La tabla del…', d:'Repetir la misma regleta', min:2, max:5}
+];
+function panelClase(pest){
+  pest=pest||'ideas';
+  const cab=`<h2>👩‍🏫 Para la clase</h2><div class="pestanas-clase">
+    <button data-p="ideas" class="${pest==='ideas'?'on':''}">Ideas para el aula</button>
+    <button data-p="medida" class="${pest==='medida'?'on':''}">Reto a medida</button>
+    <button data-p="ajustes" class="${pest==='ajustes'?'on':''}">Ajustes</button></div>`;
+  let cuerpo='';
+  if(pest==='ideas'){
+    cuerpo=`<p class="oaoa-intro"><b>OAOA</b>: primero con <b>regletas de verdad</b> (fase concreta), después en la <b>pantalla o dibujado en cuadrícula</b> (pictórica) y al final con <b>números</b> (abstracta). Cada juego trae una idea para la clase y su versión para jugar aquí.</p>
     <div class="juegos">${OAOA.map((j,i)=>`<div class="juego"><h3>${j.em} ${j.t}</h3>
       <div class="meta"><span class="tag">${j.c}</span><span class="tag fase">${j.f}</span></div>
-      <p>${j.p}</p><button data-i="${i}">▶ Jugar</button></div>`).join('')}</div>
-    <div class="botones"><button class="btn-modal sec" id="mCerrar">Cerrar</button></div>`);
+      <p>${j.p}</p><button data-i="${i}">▶ Jugar</button></div>`).join('')}</div>`;
+  }else if(pest==='medida'){
+    cuerpo=`<p>Elige qué quieres trabajar hoy y con qué número. Sirve para la pizarra digital o para un alumno concreto.</p>
+    <div class="medida">
+      <label>¿Qué trabajamos?<select id="mdTipo">${MEDIDA.map(m=>`<option value="${m.id}">${m.t} · ${m.d}</option>`).join('')}</select></label>
+      <label>Número<div class="nums" id="mdNums"></div></label>
+      <label>¿Cuántos retos?<div class="nums" id="mdTotal">${[3,5,8].map(n=>`<button data-n="${n}" class="${n===5?'on':''}">${n}</button>`).join('')}</div></label>
+      <button class="btn-modal" id="mdIr">▶ Empezar</button>
+    </div>
+    <h3 class="sub">Rondas mezcladas</h3>
+    <div class="niveles">
+      <button class="nivel" data-n="1"><span class="em">🌱</span><span><b>Nivel 1 · hasta 10</b>Infantil 5 años y 1.º: colores, trenes, amigos del 10…</span></button>
+      <button class="nivel" data-n="2"><span class="em">🌿</span><span><b>Nivel 2 · hasta 20</b>1.º y 2.º: pasar la decena, dobles y mitades, restas</span></button>
+      <button class="nivel" data-n="3"><span class="em">🌳</span><span><b>Nivel 3 · multiplicar y repartir</b>2.º y 3.º: trenes iguales, rectángulos, ¿cuántas caben?</span></button>
+    </div>`;
+  }else{
+    const total=Object.values(S.estrellas).reduce((s,v)=>s+v,0);
+    cuerpo=`<div class="ajustes">
+      <label class="interruptor"><input type="checkbox" id="ajTodo" ${S.todo?'checked':''}><span><b>Abrir todas las paradas</b>Para elegir cualquier juego sin seguir el orden del mapa.</span></label>
+      <label class="interruptor"><input type="checkbox" id="ajVoz" ${S.voz?'checked':''}><span><b>Regli lee los retos en voz alta</b>Útil para quien todavía no lee. El altavoz 🔈 de cada reto funciona siempre.</span></label>
+      <label class="interruptor"><input type="checkbox" id="ajSon" ${S.sonido?'checked':''}><span><b>Sonidos del juego</b>Clics, aciertos y fallos.</span></label>
+      <p>Este dispositivo lleva <b>${total}</b> estrellas de ${OAOA.length*3} y <b>${S.puntos}</b> puntos.</p>
+      <button class="btn-modal sec" id="ajBorrar">🧽 Empezar de cero (otro alumno)</button>
+    </div>`;
+  }
+  modal(cab+cuerpo+`<div class="botones"><button class="btn-modal sec" id="mCerrar">Cerrar</button></div>`);
   $('#mCerrar').onclick=cerrarModal;
-  document.querySelectorAll('.juego button').forEach(b=>b.onclick=()=>{
-    cerrarModal(); const j=OAOA[+b.dataset.i];
-    if(j.a.libre) modoLibre(true); else nuevaRonda(j.t,j.a.gens,j.a.total,j.a.nivel);
-  });
+  document.querySelectorAll('.pestanas-clase button').forEach(b=>b.onclick=()=>panelClase(b.dataset.p));
+  if(pest==='ideas'){
+    document.querySelectorAll('.juego button').forEach(b=>b.onclick=()=>{ cerrarModal(); const i=+b.dataset.i, j=OAOA[i];
+      if(j.a.libre) modoLibre(true); else nuevaRonda(j.t,j.a.gens,j.a.total,j.a.nivel); });
+  }else if(pest==='medida'){
+    let num=null, tot=5;
+    const pintarNums=()=>{ const m=MEDIDA.find(x=>x.id===$('#mdTipo').value); if(num==null||num<m.min||num>m.max) num=Math.min(m.max,Math.max(m.min,m.id==='veces'?2:m.id==='tren'?12:8));
+      $('#mdNums').innerHTML=Array.from({length:m.max-m.min+1},(_,k)=>m.min+k).map(n=>`<button data-n="${n}" class="${n===num?'on':''}">${n}</button>`).join('');
+      $('#mdNums').querySelectorAll('button').forEach(b=>b.onclick=()=>{ num=+b.dataset.n; pintarNums(); }); };
+    $('#mdTipo').onchange=pintarNums; pintarNums();
+    $('#mdTotal').querySelectorAll('button').forEach(b=>b.onclick=()=>{ tot=+b.dataset.n; $('#mdTotal').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
+    $('#mdIr').onclick=()=>{ const m=MEDIDA.find(x=>x.id===$('#mdTipo').value); cerrarModal();
+      nuevaRonda({descompone:'Descomponer el ',alfombra:'La alfombra del ',completa:'¿Cuánto falta hasta el ',tren:'Trenes que miden ',veces:'La tabla del '}[m.id]+num+(m.id==='completa'?'?':''), [{g:m.id,N:num}], m.id==='alfombra'?Math.min(tot,2):tot, m.id==='veces'?3:num>10?2:1); };
+    document.querySelectorAll('.nivel').forEach(b=>b.onclick=()=>{ cerrarModal(); const n=+b.dataset.n; nuevaRonda(NIVELES[n].titulo,NIVELES[n].gens,10,n); });
+  }else{
+    $('#ajTodo').onchange=e=>{ S.todo=e.target.checked; guardar(); if(!$('#inicio').hidden) pintarMapa(); };
+    $('#ajVoz').onchange=e=>{ S.voz=e.target.checked; guardar(); $('#btnVoz').classList.toggle('off',!S.voz); if(!S.voz) callar(); };
+    $('#ajSon').onchange=e=>{ S.sonido=e.target.checked; guardar(); $('#btnSonido').textContent=S.sonido?'🔊':'🔇'; };
+    $('#ajBorrar').onclick=()=>{ if(!confirm('¿Borrar las estrellas y los puntos de este dispositivo?')) return;
+      S.estrellas={}; S.puntos=0; S.racha=0; guardar(); actualizarStats(); cerrarModal(); if(!$('#inicio').hidden) pintarMapa(); };
+  }
 }
 
 /* ===================== CONTROLES ===================== */
 document.querySelectorAll('.btn-modo').forEach(b=>b.onclick=()=>{
   const m=b.dataset.modo;
-  if(m==='libre') modoLibre(); else if(m==='retos') elegirNivel(); else panelOAOA();
+  if(m==='libre') modoLibre(); else if(m==='mapa') irMapa(); else panelClase();
 });
+$('#btnMapaLibre').onclick=()=>modoLibre();
+$('#btnMapaClase').onclick=()=>panelClase();
+$('#btnVoz').onclick=()=>{ S.voz=!S.voz; guardar(); $('#btnVoz').classList.toggle('off',!S.voz); if(S.voz) decir($('#instrTexto').innerHTML); else callar(); toast(S.voz?'Regli lee los retos en voz alta':'Regli ya no lee en voz alta'); };
+$('#btnLeer').onclick=()=>decir($('#instrTexto').innerHTML);
+$('#btnDado').onclick=()=>{ const v=rnd(1,10); colocarAuto(v); regli('feliz',700); if(S.voz) decir('La regleta '+color(v)); };
 $('#btnSonido').onclick=()=>{ S.sonido=!S.sonido; $('#btnSonido').textContent=S.sonido?'🔊':'🔇'; guardar(); if(S.sonido) sonido('clic'); };
 $('#btnGirar').onclick=()=>girar(pieza(S.sel));
 $('#btnQuitar').onclick=()=>{ if(S.sel){ quitar(S.sel); sonido('quitar'); cambio(); } };
 $('#btnBorrar').onclick=()=>{ S.piezas=S.piezas.filter(p=>p.locked); S.sel=null; sonido('quitar'); cambio(); };
-$('#btnPista').onclick=()=>{ if(S.reto) toast('💡 '+S.reto.pista,false,4000); };
+$('#btnPista').onclick=()=>{ if(S.reto){ toast('💡 '+S.reto.pista,false,4000); regli('piensa',4000); hablar(S.reto.pista); } };
 $('#btnReiniciar').onclick=()=>{ if(S.retoSpec){ S.piezas=S.piezas.filter(p=>p.locked); S.sel=null; S.resuelto=false; pintarInstruccion(); render(); } };
 $('#btnSaltar').onclick=()=>{ if(S.ronda){ S.ronda.saltados++; S.racha=0; actualizarStats(); siguienteReto(); } };
 function pintarToggles(){ document.querySelectorAll('.btn-toggle').forEach(b=>b.classList.toggle('on',S.ver[b.dataset.ver])); }
@@ -590,25 +773,15 @@ document.addEventListener('keydown',e=>{
   if(e.key==='r'||e.key==='R'||e.key===' ') { e.preventDefault(); girar(pieza(S.sel)); }
   if(e.key==='Delete'||e.key==='Backspace'){ quitar(S.sel); cambio(); }
 });
-let rzT; const relayout=()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ if(!$('#app').hidden) layout(); },120); };
+let rzT; const relayout=()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ if(!$('#app').hidden) layout(); else pintarMapa(); },120); };
 window.addEventListener('resize',relayout);
 // Si cambia el hueco del tablero (texto de instrucciones más largo, paleta…), se recoloca
 let tamWrap=''; if(window.ResizeObserver) new ResizeObserver(()=>{ const w=$('#tableroWrap'), t=w.clientWidth+'x'+w.clientHeight; if(t!==tamWrap){ tamWrap=t; relayout(); } }).observe($('#tableroWrap'));
 
 /* ===================== INICIO ===================== */
-function iniciar(){
-  const n=$('#nombreJugador').value.trim();
-  S.nombre=n||S.nombre||'Campeón'; guardar(); ac();
-  $('#inicio').hidden=true; $('#app').hidden=false;
-  $('#btnSonido').textContent=S.sonido?'🔊':'🔇';
-  pintarToggles(); actualizarStats(); layout(); modoLibre();
-  toast(`¡Hola, ${S.nombre}! 👋`,true);
-}
-$('#btnJugar').onclick=iniciar;
-$('#nombreJugador').addEventListener('keydown',e=>{ if(e.key==='Enter') iniciar(); });
-
 cargar();
-if(S.nombre) $('#nombreJugador').value=S.nombre;
+pintarMapa();
+if('speechSynthesis' in window){ try{ speechSynthesis.getVoices(); }catch(e){} }
 
 /* Aviso de novedades: una sola vez por dispositivo */
 try{

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Regletas Mágicas · CEIP Capitulaciones</title>
+<meta name="description" content="Regletas de colores en cuadrícula: un viaje de trece paradas, mesa libre y juegos para la clase.">
 <meta name="theme-color" content="#7c83ff">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -14,18 +15,24 @@
 </head>
 <body>
 
-<!-- PANTALLA DE INICIO -->
+<!-- MAPA: el viaje de Regli -->
 <div class="inicio" id="inicio">
-  <div class="inicio-card">
-    <img src="LOGO.jpg" alt="CEIP Capitulaciones" class="logo-inicio" onerror="this.remove()">
-    <div class="rodillos" aria-hidden="true">
-      <i style="--v:1;--col:#fff"></i><i style="--v:2;--col:#E31F26"></i><i style="--v:3;--col:#8DC63F"></i><i style="--v:4;--col:#F8A6C6"></i><i style="--v:5;--col:#FEDD00"></i>
-    </div>
+  <header class="mapa-cab">
+    <img src="LOGO.jpg" alt="CEIP Capitulaciones" class="logo-mini" onerror="this.remove()">
     <h1>Regletas Mágicas</h1>
-    <p>¡Aprende matemáticas jugando con las regletas!</p>
-    <input type="text" id="nombreJugador" placeholder="¿Cómo te llamas?" maxlength="14" autocomplete="off">
-    <button class="btn-grande" id="btnJugar">¡A JUGAR!</button>
+    <div class="stats">
+      <span class="stat" title="Estrellas conseguidas">⭐ <b id="mapaEstrellas">0</b></span>
+    </div>
+    <div class="mapa-acc">
+      <button class="btn-mapa libre" id="btnMapaLibre">🎈 <span>Mesa libre</span></button>
+      <button class="btn-mapa clase" id="btnMapaClase">👩‍🏫 <span>Para la clase</span></button>
+    </div>
+  </header>
+  <div class="mapa-saludo">
+    <div class="regli" id="regliMapa"></div>
+    <div class="bocadillo" id="saludoMapa"></div>
   </div>
+  <div class="mapa-wrap"><div class="mapa" id="mapa"></div></div>
 </div>
 
 <!-- APP -->
@@ -38,16 +45,19 @@
       <span class="stat" title="Racha de aciertos">🔥 <b id="racha">0</b></span>
     </div>
     <nav class="modos">
-      <button class="btn-modo" data-modo="libre">🎈 <span class="txt">Libre</span></button>
-      <button class="btn-modo" data-modo="retos">🎯 <span class="txt">Retos</span></button>
-      <button class="btn-modo" data-modo="oaoa">🧠 <span class="txt">Juegos OAOA</span></button>
+      <button class="btn-modo" data-modo="mapa">🗺️ <span class="txt">Mapa</span></button>
+      <button class="btn-modo" data-modo="libre">🎈 <span class="txt">Mesa libre</span></button>
+      <button class="btn-modo" data-modo="clase">👩‍🏫 <span class="txt">Para la clase</span></button>
+      <button class="btn-icono" id="btnVoz" title="Leer en voz alta">🗣️</button>
       <button class="btn-icono" id="btnSonido" title="Sonido">🔊</button>
     </nav>
   </header>
 
   <section class="instr" id="instr">
+    <div class="regli" id="regli"></div>
     <div class="instr-principal">
       <div class="instr-texto" id="instrTexto"></div>
+      <button class="btn-leer" id="btnLeer" title="Escuchar">🔈</button>
       <div class="opciones" id="opciones"></div>
     </div>
     <div class="instr-lateral">
@@ -68,6 +78,7 @@
       <button class="btn-herr" id="btnGirar" disabled>↻ <span class="txt">Girar</span></button>
       <button class="btn-herr" id="btnQuitar" disabled>✖ <span class="txt">Quitar</span></button>
       <button class="btn-herr" id="btnBorrar">🧹 <span class="txt">Borrar todo</span></button>
+      <button class="btn-herr" id="btnDado" title="Saca una regleta al azar">🎲 <span class="txt">Al azar</span></button>
     </div>
     <div class="grupo">
       <button class="btn-toggle" data-ver="num">🔢 <span class="txt">Números</span></button>
